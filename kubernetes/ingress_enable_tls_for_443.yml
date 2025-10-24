@@ -1,0 +1,25 @@
+# This yaml has tls secrets with a self signed certificate which in turn allows
+# port 443 to be open to the public
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: kubernetes-dashboard-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"   # redirect HTTP → HTTPS
+spec:
+  tls:
+    - hosts:
+        - kubernetes-dashboard.127.0.0.1.nip.io
+      secretName: dashboard-tls-secret   # must exist or be created
+  rules:
+    - host: kubernetes-dashboard.127.0.0.1.nip.io
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: kubernetes-dashboard
+                port:
+                  number: 80
+
