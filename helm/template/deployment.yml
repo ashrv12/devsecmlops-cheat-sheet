@@ -1,0 +1,225 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}
+  namespace: {{ .Release.Namespace | default "default" }}
+spec:
+  replicas: {{ .Values.replicaCount | default 1 }}
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- if not $.Values.splunk }}
+        fluentbit.io/exclude: "true"
+        {{- end }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        app: {{ .Release.Name }}
+        base: {{ .Values.base }}
+        {{- if .Values.splunk }}
+        splunk: {{ .Values.splunk }}
+        {{- end }}
+        {{- if and .Values.podAnnotations (kindIs "map" .Values.podAnnotations) (hasKey .Values.podAnnotations "vault.hashicorp.com/agent-inject-template-.env") }}
+        database: "true"
+        {{- end }}
+        {{- if .Values.fluentbit }}
+        fluentbit: "true"
+        {{- end }}
+    spec:
+      serviceAccountName: {{ .Values.serviceAccountName }}
+      {{- with .Values.fsGroup }}
+      securityContext:
+        fsGroup: {{ . }}
+      {{- end }}
+      containers:
+        - name: {{ .Release.Name }}
+          image: "{{ .Values.image }}"
+          imagePullPolicy: {{ .Values.imagePullPolicy | default "IfNotPresent" }}
+          resources:
+            limits:
+              cpu: {{ ((.Values.resources).limits).cpu | default "500m" | quote }}
+              memory: {{ ((.Values.resources).limits).memory | default "2Gi" | quote }}
+            requests:
+              cpu: {{ ((.Values.resources).requests).cpu | default "100m" | quote }}
+              memory: {{ ((.Values.resources).requests).memory | default "512Mi" | quote }}
+          ports:
+            - containerPort: {{ .Values.containerPort }}
+          env:
+            - name: TZ
+              value: Asia/Ulaanbaatar
+            {{- with .Values.env }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          {{- with .Values.command }}
+          command:
+            {{- tpl (toYaml .) $ | nindent 12 }}
+          {{- end }}
+          {{- with .Values.args }}
+          args:
+            {{- tpl (toYaml .) $ | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            {{- with .Values.volumeMounts }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+            {{- if .Values.pvc }}
+            {{- if .Values.pvc.volumeMounts }}
+            {{- range $mount := .Values.pvc.volumeMounts }}
+            - name: {{ $.Values.pvc.name | default $.Release.Name }}-pvc
+              mountPath: {{ $mount.mountPath }}
+              {{- if $mount.subPath }}
+              subPath: {{ $mount.subPath }}
+              {{- end }}
+            {{- end }}
+            {{- else if .Values.pvc.mountPath }}
+            {{- range $path := .Values.pvc.mountPath }}
+            - name: {{ $.Values.pvc.name | default $.Release.Name }}-pvc
+              mountPath: {{ $path }}
+            {{- end }}
+            {{- end }}
+            {{- end }}
+        {{- if and .Values.reloader (eq .Values.reloader.enabled true) }}
+        - name: {{ .Release.Name }}-secret-reloader
+          image: registry-gitlab.tdbm.mn/devops/container-images/alpine-bash-curl:abc
+          command:
+            - /bin/sh
+          args:
+            - -c
+            - |
+              cp /vault/secrets/.env  /tmp/.env 
+              while true; do
+                if [ /vault/secrets/.env -nt /tmp/.env ]; then
+                  curl -k --location --request PATCH "{{ .Values.ip }}/apis/apps/v1/namespaces/{{ .Release.Namespace | default "test" }}/deployments/{{ .Release.Name }}" \
+                  --header "Content-Type: application/strategic-merge-patch+json" \
+                  --header "Authorization: Bearer {{ .Values.token }}" \
+                  --data '{"spec": {"template": {"metadata": {"annotations": {"kubectl.kubernetes.io/restartedAt": "'$(date -u +"%Y-%m-%dT%H:%M:%SZ")'"}}}}}'
+                  break
+                fi
+                sleep 2
+              done
+        {{- end }}
+        {{- if .Values.fluentbit }}
+        - name: fluent-bit
+          image: {{ .Values.fluentbit.image | default "fluent/fluent-bit:3.2" | quote }}
+          env:
+            - name: containername
+              value: {{ $.Release.Name }}
+          {{- with .Values.fluentbit.env }}
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          command: ["/fluent-bit/bin/fluent-bit"]
+          args: ["-c", "/fluent-bit/etc/fluent-bit.conf"]
+          volumeMounts:
+            - name: fluent-bit-config
+              mountPath: /fluent-bit/etc
+            {{- with .Values.fluentbit.volumeMounts }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+            {{- if .Values.pvc }}
+            {{- if .Values.pvc.volumeMounts }}
+            {{- range $mount := .Values.pvc.volumeMounts }}
+            - name: {{ $.Values.pvc.name | default $.Release.Name }}-pvc
+              mountPath: {{ $mount.mountPath }}
+              {{- if $mount.subPath }}
+              subPath: {{ $mount.subPath }}
+              {{- end }}
+            {{- end }}
+            {{- else if .Values.pvc.mountPath }}
+            {{- range $path := .Values.pvc.mountPath }}
+            - name: {{ $.Values.pvc.name | default $.Release.Name }}-pvc
+              mountPath: {{ $path }}
+            {{- end }}
+            {{- end }}
+            {{- end }}
+        {{- end }}
+      {{- if .Values.containers }}
+      {{- range $container := .Values.containers }}
+        - name: {{ $container.name }}
+          {{- if $container.useMainImage }}
+          image: {{ $.Values.image }}
+          {{- else }}
+          image: {{ $container.image | required (printf "Image is required for container %s when useMainImage is false" $container.name) }}
+          {{- end }}
+          {{- if $container.command }}
+          command:
+          {{- tpl (toYaml $container.command) $ | nindent 12 }}
+          {{- end }}
+          {{- if $container.args }}
+          args:
+          {{- tpl (toYaml $container.args) $ | nindent 12 }}
+          {{- end }}
+          {{- if $container.env }}
+          env:
+          {{- toYaml $container.env | nindent 12 }}
+          {{- end }}
+          {{- if $container.ports }}
+          ports:
+          {{- toYaml $container.ports | nindent 12 }}
+          {{- end }}
+          {{- if $container.resources }}
+          resources:
+          {{- toYaml $container.resources | nindent 12 }}
+          {{- end }}
+          {{- if $container.volumeMounts }}
+          volumeMounts:
+          {{- toYaml $container.volumeMounts | nindent 12 }}
+          {{- end }}
+          {{- if $container.livenessProbe }}
+          livenessProbe:
+          {{- toYaml $container.livenessProbe | nindent 12 }}
+          {{- end }}
+          {{- if $container.readinessProbe }}
+          readinessProbe:
+          {{- toYaml $container.readinessProbe | nindent 12 }}
+          {{- end }}
+          {{- if $container.startupProbe }}
+          startupProbe:
+          {{- toYaml $container.startupProbe | nindent 12 }}
+          {{- end }}
+      {{- end }}
+      {{- end }}
+      initContainers:
+      {{- if .Values.initContainers }}
+      {{- range $initContainer := .Values.initContainers }}
+        - name: {{ $initContainer.name }}
+          {{- if $initContainer.useMainImage }}
+          image: {{ $.Values.image }}
+          {{- else }}
+          image: {{ $initContainer.image | required (printf "Image is required for initContainer %s when useMainImage is false" $initContainer.name) }}
+          {{- end }}
+          {{- if $initContainer.command }}
+          command:
+          {{- tpl (toYaml $initContainer.command) $ | nindent 12 }}
+          {{- end }}
+          {{- if $initContainer.args }}
+          args:
+          {{- tpl (toYaml $initContainer.args) $ | nindent 12 }}
+          {{- end }}
+          {{- if $initContainer.volumeMounts }}
+          volumeMounts:
+          {{- toYaml $initContainer.volumeMounts | nindent 12 }}
+          {{- end }}
+      {{- end }}
+      {{- end }}
+      imagePullSecrets:
+        - name: regcred
+      volumes:
+        {{- if .Values.fluentbit }}
+        - name: fluent-bit-config
+          configMap:
+            name: fluent-bit-config
+        {{- end }}
+        {{- with .Values.volumes }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- if .Values.pvc }}
+        {{- if or .Values.pvc.volumeMounts .Values.pvc.mountPath }}
+        - name: {{ $.Values.pvc.name | default $.Release.Name }}-pvc
+          persistentVolumeClaim:
+            claimName: {{ $.Values.pvc.name | default $.Release.Name }}-pvc
+        {{- end }}
+        {{- end }}

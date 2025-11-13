@@ -1,0 +1,55 @@
+{{- if .Values.ingress.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ .Release.Name }}-ingress
+  namespace: {{ .Release.Namespace | default "default" }}
+  {{- with .Values.ingress.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  tls:
+  - hosts:
+      - {{ .Release.Name }}.{{ .Values.ingress.host | default "kube.etdbm.mn" }}
+    secretName: {{ .Values.ingress.secretName | default "k8s-tls" }}
+  {{- with .Values.ingress.tls }}
+    {{- toYaml . | nindent 2 }}
+  {{- end }}
+  rules:
+  - host: {{ .Release.Name }}.{{ .Values.ingress.host | default "kube.etdbm.mn" }}
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: {{ .Release.Name }}-service
+            port:
+              number: {{ .Values.service.port }}
+      {{- if .Values.ingress.additionalPaths }}
+      {{- range .Values.ingress.additionalPaths }}
+      - path: {{ .path }}
+        pathType: {{ .pathType | default "Prefix" }}
+        backend:
+          service:
+            name: {{ .serviceName }}
+            port:
+              number: {{ .servicePort }}
+      {{- end }}
+      {{- end }}
+  {{- range .Values.ingress.tls }}
+  {{- range .hosts }}
+  - host: {{ . }}
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: {{ $.Release.Name }}-service
+            port:
+              number: {{ $.Values.service.port }}
+  {{- end }}
+  {{- end }}
+{{- end }}
