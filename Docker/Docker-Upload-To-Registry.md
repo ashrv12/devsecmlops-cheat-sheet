@@ -5,6 +5,9 @@ oc create secret docker-registry registry --docker-server=securereg.registry.com
 # this is for logging into the registry for images
 docker login custom-registry.com:5000 -u admin -p password
 
+# piping strategy for better security practices on logging in via cli
+echo "password" | docker login custom-registry.com:5000 -u admin --password-stdin
+
 # this is for tagging a specific image you built locally
 docker tag test:latest custom-registry.com:5000/bun-nextjs-frontend:latest || exit 1
 
