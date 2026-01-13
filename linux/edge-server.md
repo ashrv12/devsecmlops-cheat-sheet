@@ -99,14 +99,14 @@ sudo apt install modsecurity-spoa
 
 5. Edit /etc/modsecurity-spoa/modsecurity-spoa.conf:
 
-> [!INFO]
+> [!NOTE]
 > CRS Setup: Ensure you rename the setup file before including the rules.
 
 ```bash
 cp /usr/share/modsecurity-crs/crs-setup.conf.example /usr/share/modsecurity-crs/crs-setup.conf
 ```
 
-> [!INFO]
+> [!NOTE]
 > Detection Mode First: In /etc/modsecurity-spoa/modsecurity-spoa.conf (or wherever your main ModSec config is), start with:
 
 ```text
@@ -270,7 +270,7 @@ Verify the scenario is loaded
 sudo cscli scenarios list | grep 403
 ```
 
-> [!INFO]
+> [!NOTE]
 > Test it: From an external machine (or your phone on LTE), try to access a page that triggers a ModSecurity rule (or just manually trigger a 403 if you have a rule for it) 6 times quickly.
 
 ```bash
