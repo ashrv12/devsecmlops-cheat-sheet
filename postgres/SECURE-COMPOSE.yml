@@ -1,0 +1,24 @@
+services:
+    postgres:
+        # ... existing config ...
+        ports:
+            # REMOVE "5432:5432" if you only want internal access.
+            # Only use "127.0.0.1:5432:5432" if you need to connect from your host's GUI tool.
+            - "127.0.0.1:5432:5432"
+        networks:
+            - database_nw
+
+    my_app:
+        image: my-app:latest
+        networks:
+            - frontend_nw
+            - database_nw # The app can bridge both networks
+        depends_on:
+            postgres:
+                condition: service_healthy
+
+networks:
+    frontend_nw:
+        driver: bridge
+    database_nw:
+        internal: true # This flag blocks ALL external internet access to this network
