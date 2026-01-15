@@ -1,0 +1,12 @@
+global:
+    scrape_interval: 15s # How often to check for new metrics
+
+scrape_configs:
+    - job_name: "postgres"
+      static_configs:
+          - targets: ["postgres_exporter:9187"]
+
+    # Optional: Monitor the Docker host itself if you add node-exporter later
+    # - job_name: 'node'
+    #   static_configs:
+    #     - targets: ['node_exporter:9100']

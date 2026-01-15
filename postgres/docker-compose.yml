@@ -1,0 +1,148 @@
+services:
+    postgres:
+        # Pin a specific version (e.g., 16.1), not 'latest', to prevent unexpected major upgrades.
+        build: .
+        container_name: prod_postgres
+        restart: always
+
+        # Logging solution for preventing storage becoming full too quick
+        # logging:
+        #     driver: "json-file"
+        #     options:
+        #         max-size: "100m" # Rotate after 100MB
+        #         max-file: "5" # Keep only the last 5 files (total 500MB)
+
+        # Increase shared memory size. Docker defaults to 64MB, which is often insufficient for Postgres.
+        # shm_size: 1g
+
+        environment:
+            POSTGRES_USER: ${POSTGRES_USER}
+            POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+            POSTGRES_DB: ${POSTGRES_DB}
+            # Optional: location for transaction logs (WAL) if you want to separate them
+            # PGDATA: /var/lib/postgresql/data/pgdata
+
+        volumes:
+            # Named volume for persistence (better performance than bind mounts on non-Linux FS)
+            - postgres_data:/var/lib/postgresql/data
+            # Optional: Mount custom configuration file if needed
+            # - ./custom-postgresql.conf:/etc/postgresql/postgresql.conf
+
+        ports:
+            # In production, bind to localhost if only accessed by local apps,
+            # or use a private Docker network (preferred).
+            - "127.0.0.1:5432:5432"
+
+        # Tuning Postgres via command line arguments (alternative to mounting a config file)
+        # command:
+        #     - "postgres"
+        #     --------------------------
+        #       AUDIT LOGS
+        #     - "-c" "shared_preload_libraries=pgaudit"
+        #     - "-c" "pgaudit.log=all"          # Options: ddl, read, write, function
+        #     - "-c" "pgaudit.log_catalog=off"  # Reduces noise from system catalog lookups
+        #     - "-c" "log_statement=none"       # Disable standard logging to avoid duplicates
+        #     - "-c" "log_line_prefix='%m [%p] %u@%d '" # Adds timestamp, PID, user, and DB to logs
+        #     --------------------------
+        #       PERFORMANCE CAPS
+        #     - "-c"
+        #     - "max_connections=200"
+        #     - "-c"
+        #     - "shared_buffers=256MB"
+        #     - "-c"
+        #     - "effective_cache_size=768MB"
+        #     - "-c"
+        #     - "maintenance_work_mem=64MB"
+        #     - "-c"
+        #     - "checkpoint_completion_target=0.9"
+        #     - "-c"
+        #     - "wal_buffers=16MB"
+        #     - "-c"
+        #     - "default_statistics_target=100"
+        #     - "-c"
+        #     - "random_page_cost=1.1"
+        #     - "-c"
+        #     - "effective_io_concurrency=200"
+
+        # Healthcheck to ensure dependent services wait until DB is truly ready
+        healthcheck:
+            test:
+                [
+                    "CMD-SHELL",
+                    "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}",
+                ]
+            interval: 10s
+            timeout: 5s
+            retries: 5
+            start_period: 10s
+
+        # Resource limits to prevent the DB from crashing the host node
+        # deploy:
+        #     resources:
+        #         limits:
+        #             cpus: "2"
+        #             memory: 4G
+        #         reservations:
+        #             cpus: "0.5"
+        #             memory: 1G
+
+        networks:
+            - backend_network
+
+    # -----------------------------------------
+    # BELOW IS FOR EXPORTING OBSERVABILITY
+
+    # postgres_exporter:
+    #     image: prometheuscommunity/postgres-exporter
+    #     container_name: prod_postgres_exporter
+    #     restart: always
+    #     environment:
+    #         # Re-uses the variables from your .env file
+    #         DATA_SOURCE_NAME: "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable"
+    #     depends_on:
+    #         postgres:
+    #             condition: service_healthy
+    #     networks:
+    #         - backend_network
+
+    # (OPTIONAL recommended to deploy separately from another file)
+    # (CONFIG YML FOR THE PROMETHEUS INSTANCE IS IN THE SAME FOLDER)
+    # prometheus:
+    #     image: prom/prometheus:latest
+    #     container_name: prod_prometheus
+    #     restart: always
+    #     volumes:
+    #         - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    #         - prometheus_data:/prometheus
+    #     command:
+    #         - "--config.file=/etc/prometheus/prometheus.yml"
+    #         - "--storage.tsdb.retention.time=15d" # Keep metrics for 15 days
+    #     networks:
+    #         - backend_network
+
+    # (OPTIONAL recommended to deploy separately from another file)
+    # grafana:
+    #     image: grafana/grafana:latest
+    #     container_name: prod_grafana
+    #     restart: always
+    #     ports:
+    #         - "3000:3000" # Expose Grafana UI to localhost
+    #     environment:
+    #         - GF_SECURITY_ADMIN_PASSWORD=admin_password_change_me # Initial password
+    #     volumes:
+    #         - grafana_data:/var/lib/grafana
+    #     networks:
+    #         - backend_network
+
+volumes:
+    # REMEMBER TO UNCOMMENT THESE IF YOU WILL USE THEM!
+    # prometheus_data:
+    #     driver: local
+    # grafana_data:
+    #     driver: local
+    postgres_data:
+        driver: local
+
+networks:
+    backend_network:
+        driver: bridge

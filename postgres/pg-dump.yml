@@ -1,0 +1,33 @@
+services:
+    # ... your existing postgres service ...
+
+    postgres_backup:
+        image: prodrigestivill/postgres-backup-local:18
+        container_name: prod_postgres_backup
+        restart: always
+        user: postgres:postgres # Run as non-root for security
+        depends_on:
+            postgres:
+                condition: service_healthy
+        volumes:
+            # Mount a host directory to store the actual backup files
+            - ./backups:/backups
+        environment:
+            - POSTGRES_HOST=postgres
+            - POSTGRES_DB=${POSTGRES_DB}
+            - POSTGRES_USER=${POSTGRES_USER}
+            - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+
+            # Schedule: Run every day at 03:00 AM
+            - SCHEDULE=@daily
+
+            # Retention: Keep backups for 7 days, then delete them
+            - BACKUP_KEEP_DAYS=7
+            - BACKUP_KEEP_WEEKS=4
+            - BACKUP_KEEP_MONTHS=6
+
+            # Healthcheck to ensure the backup service itself is alive
+            - HEALTHCHECK_PORT=8080
+
+        networks:
+            - backend_network
