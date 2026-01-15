@@ -1,6 +1,7 @@
 services:
     postgres:
         # Pin a specific version (e.g., 16.1), not 'latest', to prevent unexpected major upgrades.
+        # THE BUILD COMMAND POINTS TO THE DOCKERFILE ADJACENT TO IT
         build: .
         container_name: prod_postgres
         restart: always
