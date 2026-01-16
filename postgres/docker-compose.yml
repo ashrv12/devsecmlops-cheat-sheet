@@ -1,5 +1,6 @@
 services:
     postgres:
+        # IMPORTANT! remember to use the prod_postgres as the HOST not localhost!
         # Pin a specific version (e.g., 16.1), not 'latest', to prevent unexpected major upgrades.
         # THE BUILD COMMAND POINTS TO THE DOCKERFILE ADJACENT TO IT
         build: .
