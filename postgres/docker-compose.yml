@@ -27,6 +27,9 @@ services:
         volumes:
             # Named volume for persistence (better performance than bind mounts on non-Linux FS)
             - postgres_data:/var/lib/postgresql/data
+            # this init shell will create two databases, one is zitadel and the other is opensourcedevops
+            # after initiating in the docker-entry-point folder it will automatically execute
+            - ./init-multiple-databases.sh:/docker-entrypoint-initdb.d/init-multiple-databases.sh:ro
             # Optional: Mount custom configuration file if needed
             # - ./custom-postgresql.conf:/etc/postgresql/postgresql.conf
 
