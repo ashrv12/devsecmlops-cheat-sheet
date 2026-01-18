@@ -1,2 +1,2 @@
 # devsecmlops-cheat-sheet
-Open source for setting up your DevOps environment for multitudes of crazy situations, open source style.
+A guide to setting up your DevOps environment. Caters to multitudes of crazy situations, open source style.
