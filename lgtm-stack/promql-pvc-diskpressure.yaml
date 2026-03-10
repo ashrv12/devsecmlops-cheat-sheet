@@ -1,0 +1,7 @@
+- alert: HighDiskUsage
+  expr: (node_filesystem_avail_bytes{mountpoint="/data"} / node_filesystem_size_bytes{mountpoint="/data"}) * 100 < 20
+  for: 15m
+  labels:
+    severity: critical
+  annotations:
+    summary: "Storage nearly full on {{ $labels.instance }}"
