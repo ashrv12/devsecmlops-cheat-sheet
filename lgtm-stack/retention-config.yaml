@@ -1,0 +1,43 @@
+# ----------------------------------
+# TEST RETENTION CONFIGURATION
+# ----------------------------------
+
+# Loki (Logs)
+limits_config:
+  retention_period: 48h
+compactor:
+  retention_enabled: true
+
+# Tempo (Traces)
+compactor:
+  config:
+    retention_enabled: true
+    block_retention: 48h
+
+# Mimir (Metrics)
+limits:
+  compactor_blocks_retention_period: 48h
+compactor:
+  retention_enabled: true
+
+# ----------------------------------
+# PROD RETENTION CONFIGURATION
+# ----------------------------------
+
+# Loki (Logs)
+limits_config:
+  retention_period: 8760h # 365 days
+compactor:
+  retention_enabled: true
+
+# Tempo (Traces)
+compactor:
+  config:
+    retention_enabled: true
+    block_retention: 8760h
+
+# Mimir (Metrics)
+limits:
+  compactor_blocks_retention_period: 365d
+compactor:
+  retention_enabled: true
