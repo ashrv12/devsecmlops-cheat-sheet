@@ -75,3 +75,54 @@ datasources:
 ```
 
 **Result: When viewing a span, a "Logs for this span" button appears, which queries Loki for that exact trace_id.**
+
+
+## Extra random configurations if they are necessary
+
+```yaml
+# values-prod.yaml
+loki:
+  limits_config:
+    retention_period: 8760h # 1 Year
+  compactor:
+    retention_enabled: true
+  storage:
+    type: 's3'
+    s3:
+      endpoint: s3.internal.financial-cloud.com
+      bucketnames: loki-data
+      access_key_id: ${S3_ACCESS_KEY}
+      secret_access_key: ${S3_SECRET_KEY}
+  # Local PVC is only for the WAL and Index (High Performance)
+  pvc:
+    size: 100Gi 
+
+tempo:
+  storage:
+    trace:
+      backend: s3
+      s3:
+        bucket: tempo-traces
+        endpoint: s3.internal.financial-cloud.com
+  compactor:
+    config:
+      retention_enabled: true
+      block_retention: 8760h
+  # Local PVC for ingestion buffer
+  pvc:
+    size: 100Gi
+
+mimir:
+  mimir:
+    config:
+      limits:
+        compactor_blocks_retention_period: 365d
+      blocks_storage:
+        backend: s3
+        s3:
+          bucket_name: mimir-metrics
+          endpoint: s3.internal.financial-cloud.com
+  # Local PVC for block compactor and WAL
+  pvc:
+    size: 100Gi
+```
