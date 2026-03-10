@@ -1,0 +1,46 @@
+# PCI DSS scrubbing
+
+processors:
+  batch:
+  
+  # PCI DSS Redaction (Requirement 3)
+  transform/redact_pci:
+    error_mode: ignore
+    log_statements:
+      - context: log
+        statements:
+          - replace_pattern(attributes["message"], "(\\d{4}-){3}\\d{4}", "****-****-****-****")
+    trace_statements:
+      - context: span
+        statements:
+          - replace_pattern(attributes["http.request.body"], "(\\d{4}-){3}\\d{4}", "REDACTED")
+
+  # Add Resource attributes to all signals for easier filtering
+  resourcedetection:
+    detectors: [env, system, k8snode]
+
+exporters:
+  prometheusremotewrite:
+    endpoint: "http://mimir:9009/api/v1/push"
+    # Essential for Metric -> Trace correlation
+    send_exemplars: true 
+  otlp/tempo:
+    endpoint: "tempo:4317"
+    tls: { insecure: true }
+  loki:
+    endpoint: "http://loki:3100/loki/api/v1/push"
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [resourcedetection, transform/redact_pci, batch]
+      exporters: [otlp/tempo]
+    metrics:
+      receivers: [otlp]
+      processors: [resourcedetection, batch]
+      exporters: [prometheusremotewrite]
+    logs:
+      receivers: [otlp]
+      processors: [resourcedetection, transform/redact_pci, batch]
+      exporters: [loki]
