@@ -1,0 +1,1 @@
+helm upgrade -f values.yaml --install tempo grafana-community/tempo-distributed

@@ -1,0 +1,40 @@
+---
+# global:
+#   clusterDomain: 'golomt.local'
+
+gateway:
+  enabled: false
+  config:
+    resolver: "172.30.0.10" # Replace with your actual ClusterIP for DNS
+
+minio:
+  enabled: false
+
+storage:
+  trace:
+    backend: s3
+    s3:
+      access_key: "GK66990c6e8e4dab1ca8aa4fc2"
+      secret_key: "c39269a867c4a3143a663e17e8c03e48ca84c817fcab106be5751775fac3757f"
+      bucket: "tempo-traces"
+      endpoint: "garage:3900"
+      insecure: true
+
+traces:
+  otlp:
+    http:
+      enabled: true
+    grpc:
+      enabled: true
+
+distributor:
+  config:
+    log_received_spans:
+      enabled: true
+    log_discarded_spans:
+      enabled: true
+
+compactor:
+  config:
+    retention_enabled: true
+    block_retention: 48h
