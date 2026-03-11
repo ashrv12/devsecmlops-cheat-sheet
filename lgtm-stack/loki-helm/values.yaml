@@ -16,7 +16,7 @@ loki:
         object_store: s3
         schema: v13
         index:
-          prefix: loki_index_
+          prefix: loki_index_gi
           period: 24h
   storage_config:
     aws:
