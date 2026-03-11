@@ -58,3 +58,7 @@ oc exec -it garage-0 -- /garage bucket allow tempo-traces --read --write --key t
 # Permissions  Access key                             Local aliases
 # RW           GK66990c6e8e4dab1ca8aa4fc2  tempo-key
 
+# To set the bucket max size we need to run this command
+oc exec -it garage-0 -- /garage bucket set-quotas <bucket-name> --max-size 50Gib
+
+
