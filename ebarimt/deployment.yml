@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: posapi
+spec:
+  serviceName: posapi-svc
+  replicas: 1
+  selector:
+    matchLabels:
+      app: posapi
+  template:
+    metadata:
+      labels:
+        app: posapi
+    spec:
+      serviceAccountName: ebarimt
+      imagePullSecrets:
+        - name: registry
+      containers:
+        - name: posapi
+          image: registry.com:5000/itcgov/posapi:3.0.10_st
+          ports:
+            - containerPort: 7080
+          volumeMounts:
+            - name: posapi-config-volume
+              mountPath: /opt/posapi/posapi.ini
+              subPath: posapi.ini
+          resources:
+            limits:
+              cpu: '1'
+              memory: 1024Mi
+            requests:
+              cpu: 250m
+              memory: 256Mi
+      volumes:
+        - name: posapi-config-volume
+          configMap:
+            name: posapi-env

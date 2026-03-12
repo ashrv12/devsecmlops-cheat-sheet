@@ -1,0 +1,33 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: posapi-env
+data:
+  posapi.ini: |
+    [General]
+    ebarimtUrl=https://st-api.ebarimt.mn/
+    workDir=/opt/posapi/
+
+    [auth]
+    clientId=vatps-operator-gui
+    clientSecret=
+    realm=vatps
+    url=https://st.auth.itc.gov.mn/auth/
+
+    [db]
+    driver=QPSQL
+    host=postgres-svc.test-ebarimt.svc.cluster.local
+    name=vatps
+    pass=password2020
+    port=5432
+    user=ebarimt
+
+    [http]
+    host=0.0.0.0
+    port=7080
+
+    [logServer]
+    enable=false
+    ;address=127.0.0.1
+    ;port=9991
+    ;ssl=false#
