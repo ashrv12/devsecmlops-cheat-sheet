@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: loki
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: loki
+  template:
+    metadata:
+      labels:
+        app: loki
+    spec:
+      serviceAccount: loki
+      serviceAccountName: loki
+      securityContext:
+        # Loki runs as user 10001 by default; ensure it can write to the volume
+        fsGroup: 10001
+        runAsGroup: 10001
+        runAsUser: 10001
+      containers:
+        - name: loki
+          image: grafana/loki:3.6.5
+          args:
+            - "-config.file=/etc/loki/loki.yaml"
+          ports:
+            - containerPort: 3100
+          volumeMounts:
+            - name: config
+              mountPath: /etc/loki
+            - name: storage
+              mountPath: /var/loki
+      volumes:
+        - name: config
+          configMap:
+            name: loki-config
+        - name: storage
+          persistentVolumeClaim:
+            claimName: loki-pvc
