@@ -25,6 +25,8 @@ spec:
             - name: posapi-config-volume
               mountPath: /opt/posapi/posapi.ini
               subPath: posapi.ini
+            - name: posapi-storage
+              mountPath: /opt/posapi/
           resources:
             limits:
               cpu: '1'
@@ -36,3 +38,6 @@ spec:
         - name: posapi-config-volume
           configMap:
             name: posapi-env
+        - name: posapi-storage
+          persistentVolumeClaim:
+            claimName: posapi-pvc
