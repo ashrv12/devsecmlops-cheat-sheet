@@ -1,0 +1,103 @@
+apiVersion: opentelemetry.io/v1beta1
+kind: OpenTelemetryCollector
+metadata:
+  creationTimestamp: "2026-03-05T09:47:50Z"
+  generation: 9
+  name: otel
+  namespace: opentelemetry
+  resourceVersion: "182290752"
+  uid: 98a21d25-11f3-4cf0-973f-ac7ab04ff647
+spec:
+  config:
+    exporters:
+      otlp_grpc/tempo:
+        endpoint: tempo-distributor.openshift-distributed-tracing.svc.cluster.local:4317
+        tls:
+          insecure: true
+      otlp_http/loki:
+        endpoint: http://loki.openshift-distributed-tracing.svc.cluster.local:3100/otlp
+        tls:
+          insecure: true
+      prometheusremotewrite:
+        endpoint: https://prometheus-k8s-openshift-monitoring.apps.ocp.main.local:9090/api/v1/write
+        tls:
+          insecure: true
+    processors:
+      batch: {}
+      memory_limiter:
+        check_interval: 1s
+        limit_percentage: 75
+        spike_limit_percentage: 15
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+            endpoint: 0.0.0.0:4317
+          http:
+            endpoint: 0.0.0.0:4318
+    service:
+      pipelines:
+        logs:
+          exporters:
+            - otlp_http/loki
+          processors:
+            - batch
+          receivers:
+            - otlp
+        metrics:
+          exporters:
+            - prometheusremotewrite
+          processors:
+            - memory_limiter
+            - batch
+          receivers:
+            - otlp
+        traces:
+          exporters:
+            - otlp_grpc/tempo
+          processors:
+            - memory_limiter
+            - batch
+          receivers:
+            - otlp
+      telemetry:
+        metrics:
+          readers:
+            - pull:
+                exporter:
+                  prometheus:
+                    host: 0.0.0.0
+                    port: 8888
+  configVersions: 3
+  daemonSetUpdateStrategy: {}
+  deploymentUpdateStrategy: {}
+  ingress:
+    route: {}
+  ipFamilyPolicy: SingleStack
+  managementState: managed
+  mode: deployment
+  networkPolicy:
+    enabled: true
+  observability:
+    metrics: {}
+  podDnsConfig: {}
+  replicas: 1
+  resources: {}
+  targetAllocator:
+    allocationStrategy: consistent-hashing
+    collectorNotReadyGracePeriod: 30s
+    collectorTargetReloadInterval: 30s
+    filterStrategy: relabel-config
+    observability:
+      metrics: {}
+    prometheusCR:
+      scrapeInterval: 30s
+    resources: {}
+  upgradeStrategy: automatic
+status:
+  image: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.145.0
+  scale:
+    replicas: 1
+    selector: app.kubernetes.io/component=opentelemetry-collector,app.kubernetes.io/instance=opentelemetry.otel,app.kubernetes.io/managed-by=opentelemetry-operator,app.kubernetes.io/name=otel-collector,app.kubernetes.io/part-of=opentelemetry,app.kubernetes.io/version=latest
+    statusReplicas: 1/1
+  version: 0.145.0
