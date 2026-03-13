@@ -3,3 +3,7 @@ oc create secret docker-registry registry --docker-server=secureregistry.com:500
 
 # making the web service-account have anyuid admin permissions for read write access to files and mounts (chmod  chown)
 oc adm policy add-scc-to-user anyuid -z web -n pre-web
+
+# how to scale down a deployment
+oc scale deployment -n <namespace/project> <deployment name> --replicas=0
+
