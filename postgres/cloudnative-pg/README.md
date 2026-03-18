@@ -75,4 +75,6 @@ kubectl get secrets -n cnpg-system
 > [!Note]
 > We need only this one
 
+|Name|Type|Data|Age|
+|---|---|---|---|
 |single-replica-db-app           |kubernetes.io/basic-auth   |11     |11m|
