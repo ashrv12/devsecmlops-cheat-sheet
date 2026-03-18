@@ -1,0 +1,16 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: Pooler
+metadata:
+  name: pgbouncer-pooler
+  namespace: cnpg-system
+spec:
+  cluster:
+    name: single-replica-db
+  instances: 1
+  type: rw # Connects to the read-write (primary) instance
+  pgbouncer:
+    poolMode: transaction # common modes are session, transaction, statement
+    # You can add custom pgbouncer settings here
+    parameters:
+      max_client_conn: "1000"
+      default_pool_size: "20"
