@@ -72,9 +72,13 @@ kubectl get secrets -n cnpg-system
 |single-replica-db-replication   |kubernetes.io/tls          |2      |11m|
 |single-replica-db-server        |kubernetes.io/tls          |2      |11m|
 
+
+
 > [!Note]
 > We need only this one
 
 |Name|Type|Data|Age|
 |---|---|---|---|
 |single-replica-db-app           |kubernetes.io/basic-auth   |11     |11m|
+
+### We have successfully deployed a mock cluster
