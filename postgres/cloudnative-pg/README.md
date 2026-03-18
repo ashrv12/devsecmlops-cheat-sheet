@@ -15,7 +15,8 @@ helm upgrade --install cnpg \
   --set config.clusterWide=false \
   cnpg/cloudnative-pg
 ```
-[!Note] Now we will have a Cloud native pg operator brain as a deployment. 
+> [!Note]
+> Now we will have a Cloud native pg operator brain as a deployment. 
 
 3. We now need to deploy a postgres cluster with a pg_bouncer pooler instance.
 
