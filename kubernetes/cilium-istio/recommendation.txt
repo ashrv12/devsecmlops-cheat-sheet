@@ -1,0 +1,18 @@
+OpenBao: This is the Linux Foundation's official open-source fork of Vault. It is a 1:1 drop-in replacement. Use OpenBao paired with the External Secrets Operator (ESO) in ArgoCD to inject secrets directly into your pods.
+
+Infisical: A modern, open-core secret management platform that is often much easier to deploy and manage than Vault/OpenBao, with excellent Kubernetes native integrations.
+
+
+Deploying Istio in Ambient Mode (which uses ztunnel for sidecar-less L4 mTLS) alongside Cilium (for eBPF-based networking and policy) is a brilliant, high-performance combination, but they will fight each other if not configured perfectly.
+
+Because Istio Ambient intercepts traffic at the node level using iptables/ztunnel, and Cilium operates down in the kernel using eBPF, you must configure Cilium to step back slightly.
+
+When deploying Cilium via your ArgoCD Helm charts, ensure these values are set:
+
+cni.exclusive: false
+
+socketLB.hostNamespaceOnly: true
+
+kubeProxyReplacement: false (Highly recommended by Cilium when running Istio Ambient to avoid split-brain routing issues).
+
+Would you like me to draft the specific multi-stage Dockerfile utilizing GraalVM for your OneDev pipeline, or map out the specific Helm value configurations for the Istio/Cilium integration?
