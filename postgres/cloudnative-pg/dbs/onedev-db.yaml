@@ -1,0 +1,10 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: onedev-test-db
+  namespace: cnpg-system
+spec:
+  name: onedev_test
+  owner: onedev_test
+  cluster:
+    name: single-replica-db

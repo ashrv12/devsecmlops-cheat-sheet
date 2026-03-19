@@ -1,0 +1,1 @@
+kubectl port-forward svc/pgweb-svc 8080:80

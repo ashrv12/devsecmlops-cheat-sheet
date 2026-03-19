@@ -7,3 +7,16 @@ spec:
   instances: 1
   storage:
     size: 1Gi
+  managed:
+    roles:
+      - name: keycloak_test
+        ensure: present
+        login: true
+        passwordSecret: # name of the secret
+          name: keycloak-test-user
+      - name: onedev_test
+        ensure: present
+        login: true
+        passwordSecret: # name of the secret
+          name: onedev-test-user
+      

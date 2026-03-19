@@ -1,0 +1,10 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: keycloak-test-db
+  namespace: cnpg-system
+spec:
+  name: keycloak_test
+  owner: keycloak_test
+  cluster:
+    name: single-replica-db

@@ -1,0 +1,7 @@
+spec:
+  bootstrap:
+    initdb:
+      postInitApplicationSQL:
+        - |
+          GRANT USAGE ON SCHEMA public TO dev_user;
+          ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO dev_user;
