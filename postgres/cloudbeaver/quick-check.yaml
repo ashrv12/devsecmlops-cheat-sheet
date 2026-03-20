@@ -40,12 +40,10 @@ metadata:
   name: cloudbeaver-service
   namespace: cnpg-system
 spec:
-  type: NodePort
+  type: ClusterIP
   selector:
     app: cloudbeaver
   ports:
     - protocol: TCP
       port: 8978
       targetPort: 8978
-      # You can optionally specify a nodePort between 30000-32767
-      nodePort: 30978
