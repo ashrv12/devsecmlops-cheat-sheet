@@ -24,6 +24,16 @@ spec:
           image: quay.io/keycloak/keycloak:26.5.5
           args: ["start"]
           env:
+            # this is for testing oidc with onedev
+            - name: KC_HOSTNAME
+              value: "keycloak.local"
+            - name: KC_HOSTNAME_STRICT
+              value: "false"
+            - name: KC_HOSTNAME_STRICT_BACKCHANNEL
+              value: "true"
+            - name: KC_HTTP_ENABLED
+              value: "true"
+              # below are defaults
             - name: KC_BOOTSTRAP_ADMIN_USERNAME
               value: "admin"
             - name: KC_BOOTSTRAP_ADMIN_PASSWORD
