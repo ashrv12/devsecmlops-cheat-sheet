@@ -1,0 +1,10 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: gitlab-db
+  namespace: cnpg-system
+spec:
+  name: gitlabhq_production
+  owner: gitlab
+  cluster:
+    name: single-replica-db
