@@ -7,8 +7,10 @@ helm search repo gitlab
 kubectl create namespace gitlab
 
 # here is the secret creation sample that we will use with this helm
-kubectl create secret generic gitlab-pg-password \
-  --from-literal=password=gitlab -n gitlab
+kubectl create secret generic gitlab-pg-secret \
+    --from-literal=postgresql-password=$(head -c 512 /dev/urandom | LC_CTYPE=C tr -cd 'a-zA-Z0-9' | head -c 64) \
+    --from-literal=postgresql-postgres-password=$(head -c 512 /dev/urandom | LC_CTYPE=C tr -cd 'a-zA-Z0-9' | head -c 64)
+
 
 # IT IS IMPORTANT THAT WE DOWNLOAD ALL IMAGES BEFORE WE DEPLOY AND SET REDIS AND OTHER
 # EXTERNAL PROVIDERS ALL ON

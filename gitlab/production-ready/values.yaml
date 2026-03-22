@@ -1,0 +1,167 @@
+# -----------------------------------------------------------------------------
+# GLOBAL SETTINGS
+# -----------------------------------------------------------------------------
+global:
+  # Base domain for the GitLab instance
+  hosts:
+    domain: your-domain.com
+    gitlab: gitlab.your-domain.com
+    # Disabling standard registry URL since Harbor is used
+    registry:
+      name: harbor.your-domain.com
+      https: true
+
+  # Disable the built-in NGINX Ingress controller.
+  # Traffic will be routed via your Istio Gateway and VirtualServices.
+  ingress:
+    enabled: false
+    configureCertmanager: false
+
+  # ---------------------------------------------------------------------------
+  # EXTERNAL POSTGRESQL
+  # ---------------------------------------------------------------------------
+  psql:
+    host: "your-external-postgres-host"
+    port: 5432
+    database: "gitlabhq_production"
+    username: "gitlab"
+    password:
+      # Reference a pre-created Kubernetes secret containing the DB password
+      secret: "gitlab-postgres-secret"
+      key: "postgresql-password"
+
+  # ---------------------------------------------------------------------------
+  # EXTERNAL REDIS
+  # ---------------------------------------------------------------------------
+  redis:
+    host: "your-external-redis-host"
+    port: 6379
+    # If using Redis Sentinel/Cluster, configure those blocks instead.
+    password:
+      secret: "gitlab-redis-secret"
+      key: "redis-password"
+
+  # ---------------------------------------------------------------------------
+  # EXTERNAL OBJECT STORAGE (Garage S3)
+  # ---------------------------------------------------------------------------
+  appConfig:
+    object_store:
+      enabled: true
+      connection:
+        # Secret containing the provider connection details (AWS S3 compliant)
+        # Garage uses standard AWS S3 APIs, so the provider is 'AWS'
+        secret: "gitlab-object-storage-secret"
+        key: "connection"
+      # Consolidate all object storage to a single bucket or define them granularly
+      # Here we use a consolidated bucket for simplicity.
+      consolidated: true
+      bucket: "gitlab-data-bucket"
+
+    # Disable the integrated GitLab Container Registry UI integration
+    # (Since you are using Harbor natively)
+    registry:
+      enabled: false
+
+# -----------------------------------------------------------------------------
+# DISABLE BUNDLED SERVICES
+# -----------------------------------------------------------------------------
+postgresql:
+  install: false
+
+redis:
+  install: false
+
+minio:
+  install: false
+
+registry:
+  enabled: false
+
+nginx-ingress:
+  enabled: false
+
+certmanager:
+  install: false
+
+prometheus:
+  install: false # Disable if you have an external Prometheus stack
+
+# -----------------------------------------------------------------------------
+# GITLAB COMPONENTS CONFIGURATION
+# -----------------------------------------------------------------------------
+gitlab:
+  webservice:
+    # Scale based on your high-performance needs
+    minReplicas: 1
+    maxReplicas: 3
+    resources:
+      requests:
+        cpu: "1"
+        memory: "2.5G"
+      limits:
+        cpu: "2"
+        memory: "5G"
+    workerProcesses: 4 # Tune based on CPU limits
+    # Ensure pods are distributed across nodes
+    affinity:
+      podAntiAffinity:
+        preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          podAffinityTerm:
+            topologyKey: "kubernetes.io/hostname"
+            labelSelector:
+              matchLabels:
+                app: webservice
+
+  sidekiq:
+    minReplicas: 2
+    maxReplicas: 3
+    resources:
+      requests:
+        cpu: "500m"
+        memory: "1G"
+      limits:
+        cpu: "1"
+        memory: "2G"
+
+  gitaly:
+    # Gitaly handles Git repository storage. Even with external DB/S3, Gitaly is required.
+    # For production, ensure this is backed by fast NVMe/SSD storage.
+    persistence:
+      enabled: true
+      size: 500Gi
+      storageClass: "your-fast-storage-class"
+    resources:
+      requests:
+        cpu: "1"
+        memory: "2G"
+      limits:
+        cpu: "2"
+        memory: "4G"
+
+# -----------------------------------------------------------------------------
+# SECURITY & COMPLIANCE
+# -----------------------------------------------------------------------------
+# Enforce strict network boundaries between pods
+networkPolicy:
+  enabled: true
+
+# Ensure all pods run with strict security contexts
+global:
+  podSecurityContext:
+    runAsUser: 1000020
+    fsGroup: 1000020
+
+
+# -----------------------------------------------------------------------------
+# GATEWAY API CONFIGURATION
+# -----------------------------------------------------------------------------
+
+global:
+  gatewayApi:
+    enabled: true
+    # Don't install the bundled Envoy Gateway
+    installEnvoy: false
+    gatewayRef:
+      name: "gitlab-gateway"
+      namespace: "istio-ingress" # Or wherever your Istio ingress gateway pods live
