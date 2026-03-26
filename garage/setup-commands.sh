@@ -1,3 +1,7 @@
+# first obtain garage helm chart from their official repository
+git clone https://git.deuxfleurs.fr/Deuxfleurs/garage
+cd garage/script/helm
+
 # after deploying the helm chart run this command in garage-0
 oc exec -it garage-0 -- /garage status
 
