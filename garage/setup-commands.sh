@@ -2,6 +2,13 @@
 git clone https://git.deuxfleurs.fr/Deuxfleurs/garage
 cd garage/script/helm
 
+# for using CRDS to manage garage like cnpg-native
+kubectl apply -k ../k8s/crd
+helm install --create-namespace --namespace garage garage ./garage -f values.override.yaml
+
+# for just editing the default values
+helm install --create-namespace --namespace garage garage ./garage -f values.override.yaml
+
 # after deploying the helm chart run this command in garage-0
 oc exec -it garage-0 -- /garage status
 
