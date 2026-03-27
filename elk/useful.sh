@@ -31,3 +31,24 @@ curl -k -u elastic:password -X POST /_snapshot/pvc_backup/test_backup_01/_restor
   "rename_pattern": "(.+)",
   "rename_replacement": "restored_$1"
 }
+
+# spec:
+#   nodeSets:
+#   - name: default
+#     count: 1
+#     config:
+#       # This enables the snapshot feature for this path
+#       path.repo: ["/usr/share/elasticsearch/backup"]
+#     podTemplate:
+#       spec:
+#         containers:
+#         - name: elasticsearch
+#           volumeMounts:
+#           - name: elastic-backup-volume
+#             mountPath: /usr/share/elasticsearch/backup
+#         volumes:
+#         - name: elastic-backup-volume
+#           persistentVolumeClaim:
+#             # REPLACE THIS with the actual name of your existing PVC
+#             claimName: your-existing-pvc-name
+
