@@ -32,6 +32,10 @@ curl -k -u elastic:password -X POST /_snapshot/pvc_backup/test_backup_01/_restor
   "rename_replacement": "restored_$1"
 }
 
+# FOR OCP OPERATOR USERS
+# edit the yaml
+kubectl edit elasticsearch elasticsearch-sample
+
 # spec:
 #   nodeSets:
 #   - name: default
