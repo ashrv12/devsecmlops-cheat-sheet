@@ -6,7 +6,7 @@ cd garage/script/helm
 kubectl apply -k ../k8s/crd
 helm install --create-namespace --namespace garage garage ./garage -f values.override.yaml
 
-# for just editing the default values
+# for just editing the default values (RECOMMENDED)
 helm install --create-namespace --namespace garage garage ./garage -f values.override.yaml
 
 # after deploying the helm chart run this command in garage-0
