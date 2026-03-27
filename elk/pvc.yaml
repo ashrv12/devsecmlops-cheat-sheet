@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: elk-backup
+  namespace: pre-elk
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 2Gi
+  storageClassName: dellcsi-powerstore-nfs-test
+status:
+  accessModes:
+    - ReadWriteMany
+  capacity:
+    storage: 2Gi
