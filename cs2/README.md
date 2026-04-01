@@ -146,6 +146,74 @@ ip a | grep 192.168
 connect <ip_of_your_server>:27015
 ```
 
+# After checking to see if the server is running and it is, we can now install mods.
+
+1. We need to first download metamod cs2 and copy addons. Initially there is no addons folder so we just copy it.
+
+```bash
+curl -O https://mms.alliedmods.net/mmsdrop/2.0/mmsource-2.0.0-git1390-linux.tar.gz && tar -xzf mmsource-2.0.0-git1390-linux.tar.gz
+```
+
+```bash
+cp addons /root/cs2-server/cs2-data/game/csgo/addons
+```
+
+2. Now after we copy metamod to the folder. There are 2 pre start scripts that we need to replace.
+
+pre.sh
+
+```bash
+#!/bin/bash
+
+# PRE HOOK
+#  Make your customisation here
+echo "pre-hook: noop"
+echo "PATCHING gameinfo.ini FOR METAMOD FIX..."
+bash /home/steam/cs2-dedicated/acmrs.sh
+echo "METAMOD PATCH COMPLETE"
+```
+
+acmrs.sh
+
+```bash
+#!/bin/bash
+
+TARGET_DIR="/home/steam/cs2-dedicated/game/csgo"
+GAMEINFO_FILE="${TARGET_DIR}/gameinfo.gi"
+
+if [ ! -f "${GAMEINFO_FILE}" ]; then
+    echo "Error: ${GAMEINFO_FILE} does not exist in the specified directory."
+    exit 1
+fi
+
+NEW_ENTRY="            Game    csgo/addons/metamod"
+
+if grep -Fxq "$NEW_ENTRY" "$GAMEINFO_FILE"; then
+    echo "The entry '$NEW_ENTRY' already exists in ${GAMEINFO_FILE}. No changes were made."
+else
+    awk -v new_entry="$NEW_ENTRY" '
+        BEGIN { found=0; }
+        // {
+            if (found) {
+                print new_entry;
+                found=0;
+            }
+            print;
+        }
+        /Game_LowViolence/ { found=1; }
+    ' "$GAMEINFO_FILE" > "$GAMEINFO_FILE.tmp" && mv "$GAMEINFO_FILE.tmp" "$GAMEINFO_FILE"
+
+    echo "The file ${GAMEINFO_FILE} has been modified successfully. '$NEW_ENTRY' has been added."
+fi
+```
+
+After creating the two files ["pre.sh", "acmrs.sh"], we will need to copy them into the [/root/cs2-server/cs2-data] folder.
+
+```bash
+cp pre.sh /root/cs2-server/cs2-data/pre.sh && cp acmrs.sh /root/cs2-server/cs2-data/acmrs.sh
+```
+
+
 > [!NOTE]
 > Highlights information that users should take into account, even when skimming.
 
