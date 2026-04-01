@@ -1,6 +1,6 @@
 # CS2 server setup
 
-Before we begin with the setup we need a steam game server manager token. Which you can obtain from <a href="https://steamcommunity.com/dev/managegameservers" target="_blank">here.</a>
+Before we begin with the setup we need a steam game server manager token. Which you can obtain from [here](https://steamcommunity.com/dev/managegameservers){:target="_blank"} .
 
 ## Installation
 
@@ -23,7 +23,7 @@ services:                                               # Add local console for 
     container_name: cs2-server
     environment:
       # Server configuration
-      - SRCDS_TOKEN=[YOUR TOKEN HERE]                   # Retrieve your token here with the game id '730' 
+      - SRCDS_TOKEN=[YOUR TOKEN HERE]                   # Retrieve your token here with the game id '730': https://steamcommunity.com/dev/managegameservers 
       - STEAMAPPVALIDATE=0                              # (0 - no validation, 1 - enable validation)
       - CS2_SERVERNAME="myserver"
       - CS2_PW=1234                                     # add your server password
