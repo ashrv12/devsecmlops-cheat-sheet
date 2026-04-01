@@ -1,22 +1,3 @@
-# CS2 server setup
-
-Before we begin with the setup we need a steam game server manager token. Which you can obtain from (here)[https://steamcommunity.com/dev/managegameservers].
-
-## Installation
-
-1. When running it from the terminal we begin by creating our server folder.
-
-```bash
-mkdir cs2-server && cd cs2-server
-```
-
-2. We need to create a docker-compose.yml file for the cs2 server + mysql.
-
-```bash
-vim docker-compose.yml
-```
-
-```yaml
 services:                                               # Add local console for docker attach, docker attach --sig-proxy=false cs2-dedicated
   cs2-server:
     image: joedwards32/cs2
@@ -98,53 +79,3 @@ networks:
   cs2-network:
     driver: bridge
     name: cs2-network
-```
-
-3. From within the cs2-server folder create a cs2-data volume folder for keeping the cs2 files on the local path.
-
-```bash
-mkdir cs2-data
-```
-
-4. IMPORTANT! You need to change the permissions to the folder volumed in the docker image.
-
-```bash
-sudo chown 1000:1000 cs2-data
-```
-
-5. Time to run the containers and download our cs2 game files.
-
-```bash
-docker compose up -d
-```
-
-We added the [-d] flag so that we don't have to watch the server run from the terminal. We can check on it here and there.
-
-6. Check on our server to see if it is running correctly.
-
-```bash
-docker ps
-```
-
-7. Check the game server logs to see the download progress.
-
-```bash
-docker logs --tail 10 <container_id>
-```
-
-8. Find your server ip which if it's local it should be an address with [192.168.x.x], us the command below.
-
-```bash
-ip a | grep 192.168
-
-# something like this 
-# inet 192.168.1.23/24 metric 100 brd 192.168.1.255 scope global dynamic enp0s31f6
-```
-
-```sh
-# FROM WITHIN CS2 AND YOU ARE RUNNING THE SERVER ON A LINUX SERVER
-connect <ip_of_your_server>:27015
-```
-
-> [!WARN]
-> Need to do
