@@ -1,0 +1,1 @@
+rsync -avh --progress /path/to/folder_A/addons/ /path/to/folder_B/addons/

@@ -150,7 +150,7 @@ connect <ip_of_your_server>:27015
 > Highlights information that users should take into account, even when skimming.
 
 > [!TIP]
-> Optional information to help a user be more successful.
+> there is an rsync shell file that shows an example of how to use rsync to merge folders
 
 > [!IMPORTANT]
 > Crucial information necessary for users to succeed.
