@@ -1,6 +1,6 @@
 # CS2 server setup
 
-Before we begin with the setup we need a steam game server manager token. Which you can obtain from [here](https://steamcommunity.com/dev/managegameservers){:target="_blank"} .
+Before we begin with the setup we need a steam game server manager token. Which you can obtain from [here](https://steamcommunity.com/dev/managegameservers).
 
 ## Installation
 
