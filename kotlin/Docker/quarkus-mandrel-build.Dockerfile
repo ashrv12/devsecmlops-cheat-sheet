@@ -28,7 +28,7 @@ RUN ./gradlew quarkusBuild \
     --no-daemon
 
 ## STAGE 2: Minimal Runtime
-FROM quay.io/quarkus/ubi9-quarkus-micro-image:latest
+FROM quay.io/quarkus/ubi9-quarkus-micro-image:2.0
 
 WORKDIR /work/
 
