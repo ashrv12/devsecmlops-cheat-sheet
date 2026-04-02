@@ -1,5 +1,5 @@
 ## STAGE 1: Build Native Image
-FROM quay.io/quarkus/ubi9-quarkus-graalvmce-builder-image:jdk-25 AS build
+FROM quay.io/quarkus/ubi9-quarkus-mandrel-builder-image:jdk-25 AS build
 
 USER root
 WORKDIR /code
@@ -28,7 +28,7 @@ RUN ./gradlew quarkusBuild \
     --no-daemon
 
 ## STAGE 2: Minimal Runtime
-FROM quay.io/quarkus/ubi9-quarkus-micro-image:2.0
+FROM quay.io/quarkus/ubi9-quarkus-micro-image:latest
 
 WORKDIR /work/
 
