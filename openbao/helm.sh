@@ -1,11 +1,24 @@
 helm repo add openbao https://openbao.github.io/openbao-helm
 
+helm repo update
+
 helm search repo openbao/openbao
 
 # NAME            CHART VERSION   APP VERSION             DESCRIPTION
 # openbao/openbao 0.4.0           v2.0.0-alpha20240329    Official OpenBao Chart
 
-helm install --dry-run openbao openbao/openbao
+# helm install --dry-run=client openbao openbao/openbao
+
+helm install --namespace openbao --dry-run=client openbao openbao/openbao --values override-values.yml >> dry-run.yaml
+
+helm install --namespace openbao openbao openbao/openbao --values override-values.yml
+
+# check the current deployment status
+helm status openbao
+helm get manifest openbao
+
+# also if you are using a dell csi powerstore driver or have an nfs mount with maybe root:root permissions storage then use this
+oc adm policy add-scc-to-user anyuid -z openbao -n openbao
 
 # https://openbao.org/docs/platform/k8s/helm/run/
 
