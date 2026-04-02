@@ -155,7 +155,7 @@ curl -O https://mms.alliedmods.net/mmsdrop/2.0/mmsource-2.0.0-git1390-linux.tar.
 ```
 
 ```bash
-cp addons /root/cs2-server/cs2-data/game/csgo/addons
+cp addons /root/cs2-server/cs2-data/game/csgo/addons && sudo chown -R 1000:1000 /root/cs2-server/cs2-data
 ```
 
 2. Now after we copy metamod to the folder. There are 2 pre start scripts that we need to replace.
@@ -210,12 +210,120 @@ fi
 After creating the two files ["pre.sh", "acmrs.sh"], we will need to copy them into the [/root/cs2-server/cs2-data] folder.
 
 ```bash
-cp pre.sh /root/cs2-server/cs2-data/pre.sh && cp acmrs.sh /root/cs2-server/cs2-data/acmrs.sh
+cp pre.sh /root/cs2-server/cs2-data/pre.sh && cp acmrs.sh /root/cs2-server/cs2-data/acmrs.sh && sudo chown -R 1000:1000 /root/cs2-server/cs2-data
 ```
 
+3. We then install ARRCON to check if metamod was installed correctly.
+
+Just head on over to this (repository)[https://github.com/radj307/ARRCON/releases] and download the linux release and unzip it on windows or mac and then scp the file into the server.
+
+```bash
+scp ./ARRCON root@<ip_of_your_server>:/root/mods/
+```
+
+```bash
+./ARRCON -H localhost -P 28015 -p changeme -i
+```
+
+```bash
+# EXAMPLE!
+root@cks:~/mods# ./arrcon-console -H localhost -P 28015 -p changeme -i
+Authentication Successful.
+Use <Ctrl + C> or type "exit" to quit.
+RCON@localhost> meta
+Metamod:Source Menu
+usage: meta <command> [arguments]
+  alias        - List or set an alias
+  clear        - Unload all plugins forcefully
+  cmds         - Show plugin commands
+  cvars        - Show plugin cvars
+  credits      - About Metamod:Source
+  force_unload - Forcefully unload a plugin
+  game         - Information about GameDLL
+  info         - Information about a plugin
+  list         - List plugins
+  load         - Load a plugin
+  pause        - Pause a running plugin
+  refresh      - Reparse plugin files
+  retry        - Attempt to reload a plugin
+  unload       - Unload a loaded plugin
+  unpause      - Unpause a paused plugin
+  version      - Version information
+RCON@localhost>exit
+```
+
+4. After successfully running metamod on ARRCON. We will now add counterstrikesharp to our mods addons.
+
+ - We need to first initially download the (latest version)[https://github.com/roflmuffin/CounterStrikeSharp/releases] of counterstrikesharp.
 
 > [!NOTE]
-> Highlights information that users should take into account, even when skimming.
+> Download the linux runtime zip on your computer and then unzip it.
+
+```bash
+mkdir /root/mods/cssharp
+```
+
+```bash
+scp ./addons root@<ip>:/root/mods/cssharp/addons
+```
+
+```bash
+rsync -avh /root/mods/cssharp/addons/ /root/cs2-server/cs2-data/game/csgo/addons/ && sudo chown -R 1000:1000 /root/cs2-server/cs2-data
+```
+
+> [!WARNING]
+> Work in progress below
+
+5. Add a counterstrikesharp plugin Simple Admin.
+
+
+Download the latest release (here)[https://github.com/daffyyyy/CS2-SimpleAdmin/releases]. Make sure to get status blocker too if it is still there.
+
+```bash
+mkdir /root/mods/simpleadmin
+```
+
+Unzip the file and you will get a CSSharp folder.
+
+```bash
+scp ./counterstrikesharp root@192.168.1.23:/root/mods/simpleadmin/counterstrikesharp
+```
+
+```bash
+rsync -avh /root/mods/simpleadmin/counterstrikesharp/ /root/cs2-server/cs2-data/game/csgo/addons/counterstrikesharp/ && chown -R 1000:1000 /root/cs2-server/cs2-data
+```
+
+Start the server once so that we generate a ["addons/counterstrikesharp/configs/plugins/CS2-SimpleAdmin/CS2-SimpleAdmin.json"] file.
+
+```bash
+docker compose up -d
+```
+
+```bash
+curl -O 
+```
+
+```bash
+mv /root/mods/CS2-SimpleAdmin.json /root/cs2-server/cs2-data/game/csgo/addons/counterstrikesharp/configs/plugins/CS2-SimpleAdmin/CS2-SimpleAdmin.json
+```
+
+> [!TIP]
+> To add workshop maps to the simple admin panel, we need to change the workshop collection in the DOCKER COMPOSE file of the server and then add the newly added map or changed collection the the simple admin json.
+
+This section:
+
+```json
+"DefaultMaps": [],
+  "WorkshopMaps": {
+    "Dust_2_Night" : 3248665045,
+    "Mirage_Night" : 3305020821,
+    "Nuke_Night" : 3253703883,
+    "Ancient_Night" : 3299281893,
+    "Overpass_Night" : 3285124923,
+    "Lake_Xmas" : 3376496698
+  },
+```
+
 
 > [!TIP]
 > there is an rsync shell file that shows an example of how to use rsync to merge folders
