@@ -47,3 +47,29 @@ When deploying the project to your DEV/PRE/PROD servers it is very important to 
 ```bash
 docker run -e GREETING_NAME=sersan -p 8080:8080 ubi
 ```
+
+## Example of opentelemetry configuration
+
+```bash
+docker run -e QUARKUS_OTEL_SERVICE_NAME=inventory-service \
+           -e QUARKUS_OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317 \
+           my-quarkus-app-native
+```
+
+To keep your code clean, remove any manual Tracer or Meter code and simply rely on the configuration. Your application.properties should only contain the "defaults," and your environment variables will override them in production.
+
+src/main/resources/application.properties:
+
+```properties
+# Default for local dev (Quarkus Dev Services handles this)
+quarkus.otel.enabled=true
+quarkus.otel.traces.enabled=true
+quarkus.otel.metrics.enabled=true
+
+# Use a placeholder or a default name
+quarkus.otel.service.name=unnamed-service
+```
+
+When using GraalVM, Quarkus optimizes the OTEL SDK during the build phase. However, the environment variables are still evaluated at runtime.
+
+You do not need to rebuild the native image to change the Collector address or the Service Name; you simply change the Environment Variables and restart the container.
