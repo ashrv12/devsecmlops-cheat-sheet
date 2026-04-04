@@ -9,3 +9,6 @@ InventoryUpdateBackend = "hook"
 SyncFromDatabaseWhenPlayerJoin = false
 ItemLanguages = []
 ```
+
+> [!IMPORTANT]
+> Set "FollowSteamGuidelines": false, located inside the /addons/swiftlys2/configs/
