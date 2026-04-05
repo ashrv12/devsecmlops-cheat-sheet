@@ -1,0 +1,87 @@
+static_resources:
+  listeners:
+  - name: listener_0
+    address:
+      socket_address: { address: 0.0.0.0, port_value: 443 }
+    filter_chains:
+    - transport_socket:
+        name: envoy.transport_sockets.tls
+        typed_config:
+          "@type": type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.DownstreamTlsContext
+          common_tls_context:
+            tls_certificates:
+            - certificate_chain:
+                filename: "/etc/envoy/certs/live/example.org/fullchain.pem"
+              private_key:
+                filename: "/etc/envoy/certs/live/example.org/privkey.pem"
+      filters:
+      - name: envoy.filters.network.http_connection_manager
+        typed_config:
+          "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
+          stat_prefix: ingress_http
+          upgrade_configs:
+            - upgrade_type: websocket
+          route_config:
+            name: local_route
+            virtual_hosts:
+            - name: netbird_services
+              # REMEMBER TO CHANGE YOUR DOMAIN!
+              domains: ["*.example.org", "example.org"]
+              routes:
+                  # WebSockets and REST API paths
+                - match: { prefix: "/relay" }
+                  route: { cluster: netbird-server }
+                - match: { prefix: "/ws-proxy/signal" }
+                  route: { cluster: netbird-server }
+                - match: { prefix: "/ws-proxy/management" }
+                  route: { cluster: netbird-server }
+                - match: { prefix: "/api" }
+                  route: { cluster: netbird-server }
+                - match: { prefix: "/oauth2" }
+                  route: { cluster: netbird-server }
+                  # gRPC paths
+                - match: { prefix: "/signalexchange.SignalExchange/" }
+                  route: { cluster: netbird-server }
+                - match: { prefix: "/management.ManagementService/" }
+                  route: { cluster: netbird-server }
+                  # Catch-all for dashboard
+                - match: { prefix: "/" }
+                  route: { cluster: dashboard }
+          http_filters:
+          - name: envoy.filters.http.router
+            typed_config:
+              "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
+  clusters:
+    - name: netbird-server
+      connect_timeout: 0.25s
+      type: STRICT_DNS
+      lb_policy: ROUND_ROBIN
+      # Forces HTTP/2 for gRPC traffic to the backend
+      typed_extension_protocol_options:
+        envoy.extensions.upstreams.http.v3.HttpProtocolOptions:
+          "@type": type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions
+          explicit_http_config:
+            http2_protocol_options: {}
+      load_assignment:
+        cluster_name: netbird-server
+        endpoints:
+          - lb_endpoints:
+              - endpoint:
+                  address:
+                    socket_address:
+                      address: netbird-server
+                      port_value: 80
+
+    - name: dashboard
+      connect_timeout: 0.25s
+      type: STRICT_DNS
+      lb_policy: ROUND_ROBIN
+      load_assignment:
+        cluster_name: dashboard
+        endpoints:
+          - lb_endpoints:
+              - endpoint:
+                  address:
+                    socket_address:
+                      address: dashboard
+                      port_value: 80

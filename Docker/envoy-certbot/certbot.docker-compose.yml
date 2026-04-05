@@ -1,0 +1,49 @@
+services:
+  certbot:
+    image: certbot/dns-cloudflare
+    container_name: certbot
+    volumes:
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/logs:/var/log/letsencrypt
+      - ./certbot/cloudflare.ini:/cloudflare.ini
+    command: >
+      certonly --dns-cloudflare
+      --deploy-hook "chmod -R 755 /etc/letsencrypt/live/ && chmod -R 755 /etc/letsencrypt/archive/"
+      --dns-cloudflare-credentials /cloudflare.ini
+      --dns-cloudflare-propagation-seconds 60
+      --email bshirav@gmail.com
+      --agree-tosd Detach
+      --no-eff-email
+      -d example.org
+      -d *.example.org
+
+# mkdir certbot
+# mv ./cloudflare.ini ./certbot/
+# docker compose -f certbot.docker-compose.yml up certbot
+# [+] up 2/2
+#  ✔ Network envoy_default Created 0.1s
+#  ✔ Container certbot     Created 0.2s
+# Attaching to certbot
+# certbot  | Saving debug log to /var/log/letsencrypt/letsencrypt.log
+# certbot  | Requesting a certificate for example.org and *.example.org
+# certbot  | Unsafe permissions on credentials configuration file: /cloudflare.ini
+# certbot  | Waiting 60 seconds for DNS changes to propagate
+# certbot  |
+# certbot  | Successfully received certificate.
+# certbot  | Certificate is saved at: /etc/letsencrypt/live/example.org/fullchain.pem
+# certbot  | Key is saved at:         /etc/letsencrypt/live/example.org/privkey.pem
+# certbot  | This certificate expires on 2026-07-04.
+# certbot  | These files will be updated when the certificate renews.
+# certbot  | NEXT STEPS:
+# certbot  | - The certificate will need to be renewed before it expires. Certbot can automatically renew the certificate in the background, but you may need to take steps to enable that functionality. See https://certbot.org/renewal-setup for instructions.
+# certbot  |
+# certbot  | - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# certbot  | If you like Certbot, please consider supporting our work by:
+# certbot  |  * Donating to ISRG / Let's Encrypt:   https://letsencrypt.org/donate
+# certbot  |  * Donating to EFF:                    https://eff.org/donate-le
+# certbot  | - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# certbot exited with code 0
+
+# Give read/execute permission to directories and read permission to files
+# sudo chmod -R 755 ./certbot/conf/live/
+# sudo chmod -R 755 ./certbot/conf/archive/

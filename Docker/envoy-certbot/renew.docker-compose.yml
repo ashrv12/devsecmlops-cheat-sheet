@@ -1,0 +1,16 @@
+services:
+  renew_certbot:
+    image: certbot/dns-cloudflare
+    container_name: certbot
+    volumes:
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/logs:/var/log/letsencrypt
+      - ./certbot/cloudflare.ini:/cloudflare.ini
+    # Changed from 'certonly' to 'renew'
+    command: >
+      renew 
+      --dns-cloudflare 
+      --dns-cloudflare-credentials /cloudflare.ini 
+      --deploy-hook "chmod -R 755 /etc/letsencrypt/live/ && chmod -R 755 /etc/letsencrypt/archive/"
+
+# 0 3 * * * /usr/bin/docker compose -f /home/envoy/renew.docker-compose.yml run --rm renew_certbot && /usr/bin/docker exec <envoy_container_name> kill -SIGHUP 1

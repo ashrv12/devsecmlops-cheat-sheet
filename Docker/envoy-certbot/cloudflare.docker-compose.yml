@@ -1,0 +1,9 @@
+services:
+  envoy:
+    image: envoyproxy/envoy:v1.28-latest
+    ports:
+      - "443:443"
+    volumes:
+      - ./envoy.yaml:/etc/envoy/envoy.yaml
+      - ./certbot/conf:/etc/envoy/certs:ro
+    restart: always

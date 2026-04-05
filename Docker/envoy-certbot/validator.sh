@@ -1,0 +1,1 @@
+envoy --mode validate -c envoy.yaml
