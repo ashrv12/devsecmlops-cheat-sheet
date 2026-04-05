@@ -1,0 +1,40 @@
+services:
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.5.5
+    container_name: keycloak
+    command: start
+    networks:
+      - netbird_net
+    environment:
+      # Edge Proxy Configuration (Envoy)
+      - KC_HOSTNAME=keycloak.example.org
+      - KC_PROXY_HEADERS=xforwarded
+      - KC_HTTP_ENABLED=true
+
+      # Database
+      - KC_DB=postgres
+      - KC_DB_URL_HOST=postgres
+      - KC_DB_URL_DATABASE=keycloak
+      - KC_DB_USERNAME=main
+      - KC_DB_PASSWORD=main5432
+
+      # Initial Admin User
+      - KC_BOOTSTRAP_ADMIN_USERNAME=test
+      - KC_BOOTSTRAP_ADMIN_PASSWORD=test5432
+
+      # Observability
+      - KC_HEALTH_ENABLED=true
+
+    ports:
+      - "127.0.0.1:8080:8080"
+
+    healthcheck:
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/127.0.0.1/8080 && echo -e \"GET /health/live HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n\" >&3 && cat <&3 | grep -q \"200 OK\""]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 40s
+
+networks:
+  netbird_net:
+    external: true
