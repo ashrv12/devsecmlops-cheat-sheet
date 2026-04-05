@@ -1,0 +1,31 @@
+services:
+  netbird-dashboard:
+    image: netbirdio/dashboard:latest
+    environment:
+      - TZ=Asia/Hongkong
+    restart: always
+    networks:
+      - netbird_net
+    env_file:
+      - ./dashboard.env
+
+  netbird-server:
+    image: netbirdio/management:latest
+    environment:
+      - TZ=Asia/Hongkong
+    restart: always
+    networks:
+      - netbird_net
+    ports:
+      - "3478:3478/udp" # Required for STUN (NAT traversal)
+    volumes:
+      - netbird_data:/var/lib/netbird
+      - ./management.json:/etc/netbird/management.json
+    command: ["--config", "/etc/netbird/management.json"]
+
+networks:
+  netbird_net:
+    external: true
+
+volumes:
+  netbird_data:

@@ -1,0 +1,38 @@
+{
+    "Stuns": null,
+    "TURNConfig": null,
+    "Relay": null,
+    "Signal": null,
+    "Datadir": "/var/lib/netbird/",
+    "DataStoreEncryptionKey": "COk3I29T94MPzmNfbgONNynad5C4MM2k=",
+    "HttpConfig": {
+        "LetsEncryptDomain": "",
+        "CertFile": "",
+        "CertKey": "",
+        "AuthClientID": "<zitdel/keycloak client_id>",
+        "AuthAudience": "<zitdel/keycloak client_id>",
+        "CLIAuthAudience": "",
+        "AuthIssuer": "https://example.org/oauth2/",
+        "AuthUserIDClaim": "",
+        "AuthKeysLocation": "",
+        "OIDCConfigEndpoint": "",
+        "IdpSignKeyRefreshEnabled": false,
+        "ExtraAuthAudience": "",
+        "AuthCallbackURL": ""
+    },
+    "IdpManagerConfig": null,
+    "DeviceAuthorizationFlow": null,
+    "PKCEAuthorizationFlow": null,
+    "StoreConfig": {
+        "Engine": "sqlite"
+    },
+    "ReverseProxy": {
+        "TrustedHTTPProxies": null,
+        "TrustedHTTPProxiesCount": 0,
+        "TrustedPeers": null,
+        "AccessLogRetentionDays": 0,
+        "AccessLogCleanupIntervalHours": 0
+    },
+    "DisableDefaultPolicy": false,
+    "EmbeddedIdP": null
+}

@@ -19,6 +19,7 @@ static_resources:
         typed_config:
           "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
           stat_prefix: ingress_http
+          use_remote_address: true
           upgrade_configs:
             - upgrade_type: websocket
           route_config:
@@ -83,5 +84,5 @@ static_resources:
               - endpoint:
                   address:
                     socket_address:
-                      address: dashboard
+                      address: netbird-dashboard
                       port_value: 80
