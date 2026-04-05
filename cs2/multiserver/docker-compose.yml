@@ -1,0 +1,25 @@
+services:
+  scrim-5v5:
+    image: joedwards32/cs2
+    container_name: cs2-scrim
+    volumes:
+      # The Shared Base (Read-Only)
+      - /opt/cs2-servers/base-game:/home/steam/cs2-dedicated:ro
+      # Instance Specifics (Read-Write)
+      - /opt/cs2-servers/scrim-5v5/cfg:/home/steam/cs2-dedicated/game/csgo/cfg:rw
+      - /opt/cs2-servers/scrim-5v5/addons:/home/steam/cs2-dedicated/game/csgo/addons:rw
+    environment:
+      - CS2_PORT=27015
+      - CS2_SERVERNAME="Scrim 5v5"
+      # ... other env vars
+
+  warmup-dm:
+    image: joedwards32/cs2
+    container_name: cs2-dm
+    volumes:
+      - /opt/cs2-servers/base-game:/home/steam/cs2-dedicated:ro
+      - /opt/cs2-servers/warmup-dm/cfg:/home/steam/cs2-dedicated/game/csgo/cfg:rw
+      - /opt/cs2-servers/warmup-dm/addons:/home/steam/cs2-dedicated/game/csgo/addons:rw
+    environment:
+      - CS2_PORT=27016
+      - CS2_SERVERNAME="Deathmatch"
