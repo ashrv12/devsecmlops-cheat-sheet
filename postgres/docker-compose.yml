@@ -157,5 +157,5 @@ volumes:
         driver: local
 
 networks:
-    backend_network:
-        driver: bridge
+    netbird_net:
+        external: true

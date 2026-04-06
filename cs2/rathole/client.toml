@@ -1,0 +1,16 @@
+[client]
+remote_addr = "public_ip:2333"
+default_token = "private_secure_token"
+
+[client.services.http]
+local_addr = "127.0.0.1:80"
+
+[client.services.https]
+local_addr = "127.0.0.1:443"
+
+[client.services.cs_game]
+type = "udp"
+local_addr = "127.0.0.1:27015"
+
+[client.services.cs_rcon]
+local_addr = "127.0.0.1:28015"
