@@ -1,0 +1,23 @@
+apiVersion: v1
+data:
+  garage.toml: "metadata_dir = \"/mnt/meta\"\ndata_dir = \"/mnt/data\"\n\ndb_engine
+    = \"lmdb\"\n\nblock_size = \"1048576\"\n\nreplication_factor = 1\nconsistency_mode
+    = \"consistent\"\n\ncompression_level = 1\n\nrpc_bind_addr = \"[::]:3901\"\n#
+    rpc_secret will be populated by the init container from a k8s secret object\nrpc_secret
+    = \"__RPC_SECRET_REPLACE__\"\n\nbootstrap_peers = [ \n]\n\n[kubernetes_discovery]\nnamespace
+    = \"openshift-distributed-tracing\"\nservice_name = \"garage\"\nskip_crd = false\n\n[s3_api]\ns3_region
+    = \"garage\"\napi_bind_addr = \"[::]:3900\"\nroot_domain = \".s3.garage.mbank.local\"\n\n[s3_web]\nbind_addr
+    = \"[::]:3902\"\nroot_domain = \".web.garage.mbank.local\"\nindex = \"index.html\"\n\n[admin]\napi_bind_addr
+    = \"[::]:3903\""
+kind: ConfigMap
+metadata:
+  annotations:
+    meta.helm.sh/release-name: garage
+    meta.helm.sh/release-namespace: openshift-distributed-tracing
+  creationTimestamp: "2026-03-11T00:33:40Z"
+  labels:
+    app.kubernetes.io/managed-by: Helm
+  name: garage-config
+  namespace: openshift-distributed-tracing
+  resourceVersion: "180213916"
+  uid: e4ba8048-c186-4c51-a910-5230f2a877b3

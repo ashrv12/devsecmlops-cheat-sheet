@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: garage-webui
+  namespace: openshift-distributed-tracing
+  labels:
+    app: garage-webui
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: garage-webui
+  template:
+    metadata:
+      labels:
+        app: garage-webui
+    spec:
+      containers:
+        - name: garage-webui
+          image: khairul169/garage-webui:latest
+          ports:
+            - containerPort: 3909
+          env:
+            - name: API_BASE_URL
+              value: "http://garage:3903"
+            - name: S3_ENDPOINT_URL
+              value: "http://garage:3900"
+            - name: ADMIN_TOKEN
+              value: "super-secret-token"
+          resources:
+            limits:
+              cpu: 100m
+              memory: 128Mi
+            requests:
+              cpu: 50m
+              memory: 64Mi
+          volumeMounts:
+            - name: config-volume
+              mountPath: /etc/garage.toml
+              subPath: garage.toml
+              readOnly: true
+      volumes:
+        - name: config-volume
+          configMap:
+            name: garage-config

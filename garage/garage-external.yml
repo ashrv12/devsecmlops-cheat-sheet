@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: garage-external
+  namespace: openshift-distributed-tracing
+  annotations:
+    metallb.universe.tf/address-pool: pre
+    metallb.universe.tf/loadBalancerIPs: 10.90.0.76
+spec:
+  ports:
+    - name: s3-api
+      port: 3900
+      targetPort: 3900
+    - name: admin-api
+      port: 3903
+      targetPort: 3903
+  selector:
+    app.kubernetes.io/instance: garage
+    app.kubernetes.io/name: garage
+  type: LoadBalancer
