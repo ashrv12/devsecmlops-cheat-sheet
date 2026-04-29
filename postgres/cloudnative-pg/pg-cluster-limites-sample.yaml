@@ -1,0 +1,31 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: inventory-db
+spec:
+  instances: 2 # Creates 2 pods (1 Primary, 1 Standby)
+
+  # Ensure the pods stay on different physical nodes
+  affinity:
+    enablePodAntiAffinity: true
+    topologyKey: "kubernetes.io/hostname"
+
+  storage:
+    size: 100Gi
+
+  resources:
+    requests:
+      cpu: "2"
+      memory: "8Gi"
+    limits:
+      cpu: "3"
+      memory: "12Gi"
+
+  postgresql:
+    parameters:
+      max_connections: "600"
+      shared_buffers: "3GB" # 25% of 12GB
+      work_mem: "16MB"
+      maintenance_work_mem: "512MB"
+
+# 1 cpu core to 4 gb ram is the sweet spot
