@@ -1,31 +1,10 @@
-
-# Master node script
-curl -sfL https://get.k3s.io | sh -s - --flannel-backend none --disable-network-policy --disable-kube-proxy --disable traefik
-
-# where to find the token
-cat /var/lib/rancher/k3s/server/token
-# K101e7a9932c06c272<mock-token>eac2d54764cf11be55f5fbb599a79::server:22142d805b6eab9c10f996e2112af9e5
-
-# Worker node script
-curl -sfL https://get.k3s.io | K3S_URL=https://192.168.50.200:6443 \
- K3S_TOKEN=K101e7a9932c06c272<mock-token>eac2d54764cf11be55f5fbb599a79::server:22142d805b6eab9c10f996e2112af9e5 sh -
-
-# Find the EXPERIMENTAL channel crd kubectl apply guide
-https://gateway-api.sigs.k8s.io/guides/getting-started/#install-standard-channel
-
-
 # ------------------------------------------------------------------
 
-# in case you have installed the incorrect one just do
-kubectl delete -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.5.0/standard-install.yaml
+# prereq
+sudo dnf update
 
-# in case you want to restart the cilium operator
-kubectl rollout restart deployment cilium-operator -n kube-system
-
-# ------------------------------------------------------------------
-
-# verify the experimental crd's
-kubectl get crd | grep gateway.networking.k8s.io
+# install on all nodes
+sudo dnf install bind-utils
 
 # Enable the EPEL repository
 sudo dnf install epel-release -y
@@ -56,6 +35,36 @@ sudo firewall-cmd --reload
 
 # install tar first
 sudo dnf install tar
+
+# ------------------------------------------------------------------
+
+# Master node script
+curl -sfL https://get.k3s.io | sh -s - --flannel-backend none --disable-network-policy --disable-kube-proxy --disable traefik
+
+# where to find the token
+cat /var/lib/rancher/k3s/server/token
+# K101e7a9932c06c272<mock-token>eac2d54764cf11be55f5fbb599a79::server:22142d805b6eab9c10f996e2112af9e5
+
+# Worker node script
+curl -sfL https://get.k3s.io | K3S_URL=https://192.168.50.200:6443 \
+ K3S_TOKEN=K101e7a9932c06c272<mock-token>eac2d54764cf11be55f5fbb599a79::server:22142d805b6eab9c10f996e2112af9e5 sh -
+
+# Find the EXPERIMENTAL channel crd kubectl apply guide
+https://gateway-api.sigs.k8s.io/guides/getting-started/#install-standard-channel
+
+
+# ------------------------------------------------------------------
+
+# in case you have installed the incorrect one just do
+kubectl delete -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.5.0/standard-install.yaml
+
+# in case you want to restart the cilium operator
+a
+
+# ------------------------------------------------------------------
+
+# verify the experimental crd's
+kubectl get crd | grep gateway.networking.k8s.io
 
 # create a session for telling cilium where the kubeconfig file is
 export KUBECONFIG=/path/to/your/admin.conf
