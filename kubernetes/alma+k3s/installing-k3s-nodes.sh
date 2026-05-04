@@ -36,6 +36,70 @@ sudo firewall-cmd --reload
 # install tar first
 sudo dnf install tar
 
+# HOW TO SETUP TRUSTED ZONES BETWEEN CLUSTER NODES SO THAT THEY CAN HAVE FULL ACCESS
+# TO EVERY PORT WITH EACH OTHER
+
+# Add the first node
+sudo firewall-cmd --permanent --zone=trusted --add-source=192.168.23.200/32
+
+# Add the second node
+sudo firewall-cmd --permanent --zone=trusted --add-source=192.168.23.201/32
+
+# Add the third node
+sudo firewall-cmd --permanent --zone=trusted --add-source=10.200.200.90/32
+
+# Apply the changes
+sudo firewall-cmd --reload
+
+# =================================================================
+
+# HOW TO CHECK DNS CONFIGURATION
+
+# Obtain [CONNECTION_NAME]
+nmcli connection show
+
+# current nameservers
+cat /etc/resolv.conf
+
+# Set the new DNS servers
+nmcli connection modify "[CONNECTION_NAME]" ipv4.dns "8.8.8.8 8.8.4.4"
+
+# Apply the dns changes
+nmcli connection up "[CONNECTION_NAME]"
+
+# =================================================================
+
+
+# *****************************************************************
+
+# THIS IS FOR REMOVING UNNECESSARY PUBLIC PORTS IF THERE ARE ANY AND MOVING FROM
+# PUBLIC ZONE TO TRUSTED PRIVATE ZONE FIREWALL SETUP FOR NODE TO NODE CONNECTIVITY
+
+# Remove Cilium VXLAN and Health Check ports
+sudo firewall-cmd --permanent --remove-port=8472/udp
+sudo firewall-cmd --permanent --remove-port=4240/tcp
+
+# Remove Hubble ports
+sudo firewall-cmd --permanent --remove-port=4244/tcp
+sudo firewall-cmd --permanent --remove-port=4245/tcp
+
+# Optional: Only do this if you don't need to access the API from a 4th machine
+sudo firewall-cmd --permanent --remove-port=6443/tcp
+
+# remove this from the public firewall
+sudo firewall-cmd --permanent --remove-port=51820/udp
+
+# Apply the changes
+sudo firewall-cmd --reload
+
+# Note: Your nodes will still be able to communicate on 51820 (and all other ports) because their specific
+# IP addresses (192.168.50.200, etc.) are now recognized by the trusted zone.
+
+# *****************************************************************
+
+# Apply the changes
+sudo firewall-cmd --reload
+
 # ------------------------------------------------------------------
 
 # Master node script
