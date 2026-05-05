@@ -145,16 +145,17 @@ rm cilium-linux-${CLI_ARCH}.tar.gz{,.sha256sum}
 
 # cilium command
 cilium install \
- --set kubeProxyReplacement=true \
- --set k8sServiceHost=192.168.50.200 \
- --set k8sServicePort=6443 \
- --set encryption.enabled=true \
- --set encryption.type=wireguard \
- --set encryption.nodeEncryption=true \
- --set hubble.relay.enabled=true \
- --set hubble.ui.enabled=true \
- --set operator.replicas=1 \
- --set gatewayAPI.enabled=true
+    --set=ipam.operator.clusterPoolIPv4PodCIDRList="10.42.0.0/16"
+    --set kubeProxyReplacement=true \
+    --set k8sServiceHost=192.168.50.200 \
+    --set k8sServicePort=6443 \
+    --set encryption.enabled=true \
+    --set encryption.type=wireguard \
+    --set encryption.nodeEncryption=true \
+    --set hubble.relay.enabled=true \
+    --set hubble.ui.enabled=true \
+    --set operator.replicas=1 \
+    --set gatewayAPI.enabled=true
 
 # restart cilium
 kubectl rollout restart deployment cilium-operator -n kube-system
