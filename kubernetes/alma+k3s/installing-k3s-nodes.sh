@@ -27,12 +27,6 @@ echo "net.ipv4.ip_forward = 1" | sudo tee /etc/sysctl.d/99-kubernetes-cri.conf
 # Apply the changes immediately
 sudo sysctl -p /etc/sysctl.d/99-kubernetes-cri.conf
 
-# Open the default WireGuard port
-sudo firewall-cmd --permanent --add-port=51820/udp
-
-# Reload the firewall to apply changes
-sudo firewall-cmd --reload
-
 # install tar first
 sudo dnf install tar
 
@@ -161,3 +155,9 @@ cilium install \
  --set hubble.ui.enabled=true \
  --set operator.replicas=1 \
  --set gatewayAPI.enabled=true
+
+# restart cilium
+kubectl rollout restart deployment cilium-operator -n kube-system
+
+# critical \/
+https://docs.cilium.io/en/stable/installation/k3s/
