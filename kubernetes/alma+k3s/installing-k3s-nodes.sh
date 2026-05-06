@@ -1,5 +1,10 @@
 # ------------------------------------------------------------------
 
+firewall-cmd --permanent --add-port=6443/tcp #apiserver
+firewall-cmd --permanent --zone=trusted --add-source=10.42.0.0/16 #pods
+firewall-cmd --permanent --zone=trusted --add-source=10.43.0.0/16 #services
+firewall-cmd --reload
+
 # prereq
 sudo dnf update
 
@@ -87,7 +92,7 @@ sudo firewall-cmd --permanent --remove-port=51820/udp
 sudo firewall-cmd --reload
 
 # Note: Your nodes will still be able to communicate on 51820 (and all other ports) because their specific
-# IP addresses (192.168.50.200, etc.) are now recognized by the trusted zone.
+# IP addresses (192.168.50.212, etc.) are now recognized by the trusted zone.
 
 # *****************************************************************
 
@@ -98,17 +103,23 @@ sudo firewall-cmd --reload
 
 # Master node script
 curl -sfL https://get.k3s.io | sh -s - --flannel-backend none --disable-network-policy --disable-kube-proxy --disable traefik
+curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC='--flannel-backend=none --disable-network-policy --disable traefik' sh -
 
 # where to find the token
 cat /var/lib/rancher/k3s/server/token
 # K101e7a9932c06c272<mock-token>eac2d54764cf11be55f5fbb599a79::server:22142d805b6eab9c10f996e2112af9e5
 
 # Worker node script
-curl -sfL https://get.k3s.io | K3S_URL=https://192.168.50.200:6443 \
+curl -sfL https://get.k3s.io | K3S_URL=https://192.168.50.212:6443 \
  K3S_TOKEN=K101e7a9932c06c272<mock-token>eac2d54764cf11be55f5fbb599a79::server:22142d805b6eab9c10f996e2112af9e5 sh -
+
+
+curl -sfL https://get.k3s.io | K3S_URL='https://192.168.50.212:6443' K3S_TOKEN=K10b82269d9ffa6254561fc34c10bfcbaa99543e5bc26eba9bfb17980c8f1ad7edc::server:9b7bc29b7a908c83da3372faaffc46e6 sh -
 
 # Find the EXPERIMENTAL channel crd kubectl apply guide
 https://gateway-api.sigs.k8s.io/guides/getting-started/#install-standard-channel
+
+kubectl apply --server-side -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.5.0/experimental-install.yaml
 
 
 # ------------------------------------------------------------------
@@ -125,7 +136,7 @@ a
 kubectl get crd | grep gateway.networking.k8s.io
 
 # create a session for telling cilium where the kubeconfig file is
-export KUBECONFIG=/path/to/your/admin.conf
+export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
 # Then run cilium install...
 
 # or just use the default by copying the config
@@ -143,12 +154,27 @@ sudo tar xzvfC cilium-linux-${CLI_ARCH}.tar.gz /usr/local/bin
 rm cilium-linux-${CLI_ARCH}.tar.gz{,.sha256sum}
 
 
+cilium install --version 1.19.3 --set=ipam.operator.clusterPoolIPv4PodCIDRList="10.42.0.0/16"
+
 # cilium command
 cilium install \
-    --set=ipam.operator.clusterPoolIPv4PodCIDRList="10.42.0.0/16"
+    --set=ipam.operator.clusterPoolIPv4PodCIDRList="10.42.0.0/16" \
     --set kubeProxyReplacement=true \
-    --set k8sServiceHost=192.168.50.200 \
+    --set k8sServiceHost=192.168.50.212 \
     --set k8sServicePort=6443 \
+    --set encryption.enabled=true \
+    --set encryption.type=wireguard \
+    --set encryption.nodeEncryption=true \
+    --set hubble.relay.enabled=true \
+    --set hubble.ui.enabled=true \
+    --set operator.replicas=1 \
+    --set gatewayAPI.enabled=true
+
+cilium upgrade \
+    --set kubeProxyReplacement=true \
+    --set k8sServiceHost=192.168.50.212 \
+    --set k8sServicePort=6443 \
+    --set ipam.operator.clusterPoolIPv4PodCIDRList="10.42.0.0/16" \
     --set encryption.enabled=true \
     --set encryption.type=wireguard \
     --set encryption.nodeEncryption=true \
@@ -162,3 +188,5 @@ kubectl rollout restart deployment cilium-operator -n kube-system
 
 # critical \/
 https://docs.cilium.io/en/stable/installation/k3s/
+
+ss -tulpn | grep -E ":809[0-9]"
