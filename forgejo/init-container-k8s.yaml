@@ -1,0 +1,7 @@
+initContainers:
+    - name: take-data-dir-ownership
+      image: alpine:latest
+      command: ["sh", "-c", "chown -R 1022:1022 /var/lib/gitea"]
+      volumeMounts:
+          - name: forgejo-data
+            mountPath: /var/lib/gitea
