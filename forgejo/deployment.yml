@@ -1,0 +1,100 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: forgejo
+spec:
+    replicas: 1
+    selector:
+        matchLabels:
+            app: forgejo
+    template:
+        metadata:
+            labels:
+                app: forgejo
+        spec:
+            securityContext:
+                fsGroup: 10222
+            initContainers:
+                - name: init-chmod-data
+                  image: busybox:latest
+                  command: ["sh", "-c", "chown -R 10222:10222 /var/lib/gitea"]
+                  volumeMounts:
+                      - name: forgejo-data
+                        mountPath: /var/lib/gitea
+            containers:
+                - name: forgejo
+                  image: codeberg.org/forgejo/forgejo:15-rootless
+                  # readinessProbe:
+                  #     httpGet:
+                  #         path: /index.html # Or a simple health check endpoint
+                  #         port: 3000
+                  #     initialDelaySeconds: 10
+                  #     periodSeconds: 5
+                  resources:
+                      requests:
+                          cpu: "200m"
+                          memory: "512Mi"
+                      limits:
+                          cpu: "1000m" # Allow bursting for heavy Git operations
+                          memory: "1Gi"
+                  ports:
+                      - containerPort: 3000
+                      - containerPort: 22222
+                  securityContext:
+                      runAsUser: 10222
+                      runAsGroup: 10222
+                  env:
+                      - name: USER_UID
+                        value: "10222"
+                      - name: USER_GID
+                        value: "10222"
+                      # General
+                      - name: FORGEJO__general__APP_NAME
+                        value: "M-Business Frogejo 🐸"
+
+                      # Database
+                      - name: FORGEJO__database__DB_TYPE
+                        value: "postgres"
+                      - name: FORGEJO__database__HOST
+                        value: "forgejo-db:5432"
+                      - name: FORGEJO__database__NAME
+                        value: "forgejo"
+                      - name: FORGEJO__database__USER
+                        value: "forgejo"
+                      - name: FORGEJO__database__PASSWD
+                        value: "forgejo"
+
+                      # Server / URL Settings
+                      - name: FORGEJO__server__DOMAIN
+                        value: "forgejo.exqm.com"
+                      - name: FORGEJO__server__ROOT_URL
+                        value: "https://forgejo.exqm.com/"
+                      - name: FORGEJO__server__HTTP_PORT
+                        value: "3000"
+
+                      # SSH Configuration (Crucial for Envoy)
+                      - name: FORGEJO__server__START_SSH_SERVER
+                        value: "true"
+                      - name: FORGEJO__server__SSH_DOMAIN
+                        value: "forgejo.exqm.com"
+                      - name: FORGEJO__server__SSH_PORT
+                        value: "22" # UI will show port 22
+                      - name: FORGEJO__server__SSH_LISTEN_PORT
+                        value: "2222" # Container listens on 2222
+
+                      # Paths (mapped to your 1022:1022 volume)
+                      - name: FORGEJO__repository__ROOT
+                        value: "/var/lib/gitea/git/repositories"
+                      - name: FORGEJO__server__APP_DATA_PATH
+                        value: "/var/lib/gitea/data"
+
+                      # Security
+                      - name: FORGEJO__security__INSTALL_LOCK
+                        value: "true"
+                  volumeMounts:
+                      - name: forgejo-data
+                        mountPath: /var/lib/gitea
+            volumes:
+                - name: forgejo-data
+                  persistentVolumeClaim:
+                      claimName: forgejo-data-pvc

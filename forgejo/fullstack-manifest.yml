@@ -1,0 +1,202 @@
+# 1. STORAGE DEFINITIONS
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+    name: forgejo-data-pvc
+spec:
+    accessModes: ["ReadWriteMany"]
+    resources:
+        requests:
+            storage: 10Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+    name: forgejo-db-pvc
+spec:
+    accessModes: ["ReadWriteMany"]
+    resources:
+        requests:
+            storage: 5Gi
+---
+# 2. NETWORKING (SERVICES)
+apiVersion: v1
+kind: Service
+metadata:
+    name: forgejo
+spec:
+    selector:
+        app: forgejo
+    ports:
+        - name: http
+          port: 3000
+          targetPort: 3000
+        - name: ssh
+          port: 2222
+          targetPort: 2222
+---
+apiVersion: v1
+kind: Service
+metadata:
+    name: forgejo-db
+spec:
+    selector:
+        app: forgejo-db
+    ports:
+        - port: 5432
+          targetPort: 5432
+---
+# 3. GATEWAY API (ENVOY)
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+    name: forgejo-gateway
+spec:
+    gatewayClassName: envoy-gateway
+    listeners:
+        - name: https
+          protocol: HTTPS
+          port: 443
+          hostname: "forgejo.mbusiness.mn"
+          tls:
+              mode: Terminate
+              certificateRefs:
+                  - name: forgejo-tls-cert # Ensure you have this secret!
+        - name: ssh
+          protocol: TCP
+          port: 22 # Public SSH port
+          allowedRoutes:
+              namespaces:
+                  from: Same
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+    name: forgejo-web-route
+spec:
+    parentRefs: [{ name: forgejo-gateway, sectionName: https }]
+    hostnames: ["forgejo.mbusiness.mn"]
+    rules:
+        - backendRefs: [{ name: forgejo, port: 3000 }]
+---
+apiVersion: gateway.networking.k8s.io/v1alpha2
+kind: TCPRoute
+metadata:
+    name: forgejo-ssh-route
+spec:
+    parentRefs: [{ name: forgejo-gateway, sectionName: ssh }]
+    rules:
+        - backendRefs: [{ name: forgejo, port: 2222 }]
+---
+# 4. DEPLOYMENTS
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: forgejo
+spec:
+    replicas: 1
+    template:
+        metadata:
+            labels:
+                app: forgejo
+        spec:
+            securityContext:
+                fsGroup: 1022
+            initContainers:
+                - name: init-permissions
+                  image: busybox:latest
+                  command: ["sh", "-c", "chown -R 1022:1022 /var/lib/gitea"]
+                  volumeMounts:
+                      - name: data
+                        mountPath: /var/lib/gitea
+            containers:
+                - name: forgejo
+                  image: codeberg.org/forgejo/forgejo:15-rootless
+                  resources:
+                      requests:
+                          cpu: "200m"
+                          memory: "512Mi"
+                      limits:
+                          cpu: "1000m"
+                          memory: "1Gi"
+                  env:
+                      # User Config
+                      - name: USER_UID
+                        value: "1022"
+                      - name: USER_GID
+                        value: "1022"
+                      # Database Config
+                      - name: FORGEJO__database__DB_TYPE
+                        value: "postgres"
+                      - name: FORGEJO__database__HOST
+                        value: "forgejo-db:5432"
+                      - name: FORGEJO__database__NAME
+                        value: "forgejo"
+                      - name: FORGEJO__database__USER
+                        value: "forgejo"
+                      - name: FORGEJO__database__PASSWD
+                        value: "forgejo"
+                      # SSH SETTINGS (Matching your app.ini list)
+                      - name: FORGEJO__server__SSH_DOMAIN
+                        value: "forgejo.mbusiness.mn"
+                      - name: FORGEJO__server__SSH_PORT
+                        value: "22" # The port users see in the UI
+                      - name: FORGEJO__server__SSH_LISTEN_PORT
+                        value: "2222" # The port the app actually listens on
+                      - name: FORGEJO__server__START_SSH_SERVER
+                        value: "true"
+                  volumeMounts:
+                      - name: data
+                        mountPath: /var/lib/gitea
+            volumes:
+                - name: data
+                  persistentVolumeClaim:
+                      claimName: forgejo-data-pvc
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: forgejo-db
+spec:
+    replicas: 1
+    template:
+        metadata:
+            labels:
+                app: forgejo-db
+        spec:
+            initContainers:
+                - name: init-db-perms
+                  image: busybox:latest
+                  command:
+                      [
+                          "sh",
+                          "-c",
+                          "chown -R 1022:1022 /var/lib/postgresql/data && chmod 700 /var/lib/postgresql/data",
+                      ]
+                  volumeMounts:
+                      - name: db-data
+                        mountPath: /var/lib/postgresql/data
+            containers:
+                - name: postgres
+                  image: postgres:14
+                  resources:
+                      requests:
+                          cpu: "100m"
+                          memory: "256Mi"
+                      limits:
+                          cpu: "500m"
+                          memory: "512Mi"
+                  env:
+                      - name: POSTGRES_USER
+                        value: "forgejo"
+                      - name: POSTGRES_PASSWORD
+                        value: "forgejo"
+                      - name: POSTGRES_DB
+                        value: "forgejo"
+                  volumeMounts:
+                      - name: db-data
+                        mountPath: /var/lib/postgresql/data
+            volumes:
+                - name: db-data
+                  persistentVolumeClaim:
+                      claimName: forgejo-db-pvc
