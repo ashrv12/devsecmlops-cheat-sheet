@@ -68,6 +68,11 @@ services:
             FORGEJO__database__NAME: forgejo
             FORGEJO__database__USER: admin
             FORGEJO__database__PASSWD: supersecret
+            # FORGEJO__service__DISABLE_REGISTRATION: "true"
+            # FORGEJO__auth__DISABLE_LOCAL_AUTHENTICATION: "true"
+            FORGEJO__service__SHOW_REGISTRATION_BUTTON: "false"
+            FORGEJO__oauth2_client__ENABLE_AUTO_REGISTRATION: "true"
+            FORGEJO__oauth2_client__ACCOUNT_LINKING: "auto"
         restart: always
         extra_hosts:
             sso.local: host-gateway
@@ -77,7 +82,7 @@ services:
             - keycloak
         volumes:
             - forgejo_data:/data
-            - ./app.ini:/etc/forgejo
+            # - ./app.ini:/etc/forgejo
         ports:
             - "3000:3000"
             - "222:22"
