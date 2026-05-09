@@ -6,16 +6,9 @@
 # Start from the requested Mandrel base
 FROM ghcr.io/graalvm/mandrel:23-openjdk-21-ol9
 
-# Install base dependencies and localization packages
 RUN dnf update -y && \
-    dnf install -y wget curl git unzip tar fontconfig freetype glibc-locale-source glibc-langpack-ru && \
+    dnf install -y wget curl git unzip tar && \
     dnf clean all
-
-# Generate Russian locales to support localized invoice/document generation
-RUN localedef -c -i ru_RU -f UTF-8 ru_RU.UTF-8
-ENV LANG=ru_RU.UTF-8 \
-    LANGUAGE=ru_RU:ru \
-    LC_ALL=ru_RU.UTF-8
 
 # Install Gradle
 ARG GRADLE_VERSION=8.7
