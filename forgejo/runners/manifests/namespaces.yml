@@ -1,0 +1,20 @@
+# 1. Namespace & Secrets
+# This secures the Forgejo registration token within its own isolated namespace.
+
+apiVersion: v1
+kind: Namespace
+metadata:
+    name: forgejo-runners
+    labels:
+        pod-security.kubernetes.io/enforce: restricted # Ensures high-compliance boundaries
+---
+apiVersion: v1
+kind: Secret
+metadata:
+    name: forgejo-runner-secret
+    namespace: forgejo-runners
+type: Opaque
+stringData:
+    # Replace with your actual Forgejo instance URL and token
+    FORGEJO_INSTANCE_URL: "https://forgejo.internal.network"
+    FORGEJO_RUNNER_TOKEN: "your-runner-registration-token"

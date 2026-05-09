@@ -1,6 +1,6 @@
 - Resource: CPU
-  "Request (Minimum)": "2000m (2 Cores)"
-  "Limit (Maximum)": "8000m (8 Cores)"
+  "Request (Minimum)": "16000m (16 Cores)"
+  "Limit (Maximum)": "20000m (20 Cores)"
   Why?: "Gradle and Mandrel are highly parallel. Native image generation will consume all available cores if not capped."
 - Resource: Memory
   "Request (Minimum)": 8Gi

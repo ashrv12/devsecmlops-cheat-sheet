@@ -1,0 +1,78 @@
+# 4. Dev/Test Runners (JVM Builds)
+# The Dev/Test deployment mirrors the production layout but enforces the
+# smaller 8 CPU / 8Gi resource limits to protect cluster stability during standard CI testing phases.
+
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+    name: forgejo-runner-dev
+    namespace: forgejo-runners
+spec:
+    serviceName: "forgejo-runner-dev"
+    replicas: 2
+    selector:
+        matchLabels:
+            app: forgejo-runner
+            tier: dev
+    template:
+        metadata:
+            labels:
+                app: forgejo-runner
+                tier: dev
+        spec:
+            securityContext:
+                fsGroup: 1000
+                runAsUser: 1000
+                runAsNonRoot: true
+                seccompProfile:
+                    type: RuntimeDefault
+            affinity:
+                podAntiAffinity:
+                    requiredDuringSchedulingIgnoredDuringExecution:
+                        - labelSelector:
+                              matchExpressions:
+                                  - key: tier
+                                    operator: In
+                                    values:
+                                        - dev
+                          topologyKey: kubernetes.io/hostname
+            containers:
+                - name: runner
+                  image: your-registry.internal/custom-forgejo-runner:mandrel-23
+                  imagePullPolicy: Always
+                  env:
+                      - name: GITEA_INSTANCE_URL
+                        valueFrom:
+                            secretKeyRef:
+                                name: forgejo-runner-secret
+                                key: FORGEJO_INSTANCE_URL
+                      - name: GITEA_RUNNER_REGISTRATION_TOKEN
+                        valueFrom:
+                            secretKeyRef:
+                                name: forgejo-runner-secret
+                                key: FORGEJO_RUNNER_TOKEN
+                      - name: GITEA_RUNNER_LABELS
+                        value: "jvm-build:docker://your-registry.internal/custom-forgejo-runner:mandrel-23"
+                  resources:
+                      requests:
+                          cpu: "2000m"
+                          memory: "4Gi"
+                      limits:
+                          cpu: "8000m"
+                          memory: "8Gi"
+                  volumeMounts:
+                      - name: runner-data
+                        mountPath: /home/runner/.gradle
+                        subPath: gradle-cache
+                      - name: runner-data
+                        mountPath: /workspace
+                        subPath: workspace-data
+    volumeClaimTemplates:
+        - metadata:
+              name: runner-data
+          spec:
+              accessModes: ["ReadWriteOnce"]
+              storageClassName: "local-runner-storage"
+              resources:
+                  requests:
+                      storage: 50Gi

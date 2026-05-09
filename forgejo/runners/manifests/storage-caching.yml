@@ -1,0 +1,36 @@
+# 2. Storage Topology (Local PVs)
+# The local-storage class delays binding until a Pod is scheduled, ensuring the PVC is provisioned on
+# the exact node where the runner is assigned. We define 4 distinct PVs mapped to host paths (two on each node,
+# assuming node names rke2-agent-1 and rke2-agent-2).
+
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+    name: local-runner-storage
+provisioner: kubernetes.io/no-provisioner
+volumeBindingMode: WaitForFirstConsumer
+---
+# Example of 1 out of 4 Persistent Volumes required.
+# Repeat this block for prod-1, dev-0, dev-1, adjusting the capacity, hostPath, and node hostname.
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+    name: pv-runner-prod-0
+spec:
+    capacity:
+        storage: 100Gi
+    volumeMode: Filesystem
+    accessModes:
+        - ReadWriteOnce
+    persistentVolumeReclaimPolicy: Retain
+    storageClassName: local-runner-storage
+    local:
+        path: /mnt/fast-storage/runner-prod-0
+    nodeAffinity:
+        required:
+            nodeSelectorTerms:
+                - matchExpressions:
+                      - key: kubernetes.io/hostname
+                        operator: In
+                        values:
+                            - rke2-agent-1

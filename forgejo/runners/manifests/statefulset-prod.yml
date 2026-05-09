@@ -1,0 +1,80 @@
+# 3. Production Runners (Mandrel/Native Builds)
+# This StatefulSet deploys the Production runners, applying strict podAntiAffinity to
+# prevent both 32-core burst workloads from landing on the same physical hardware.
+# It uses a single PVC per replica but mounts subpaths for .gradle and /workspace to
+# isolate dependency caching from project persistence.
+
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+    name: forgejo-runner-prod
+    namespace: forgejo-runners
+spec:
+    serviceName: "forgejo-runner-prod"
+    replicas: 2
+    selector:
+        matchLabels:
+            app: forgejo-runner
+            tier: production
+    template:
+        metadata:
+            labels:
+                app: forgejo-runner
+                tier: production
+        spec:
+            securityContext:
+                fsGroup: 1000
+                runAsUser: 1000
+                runAsNonRoot: true
+                seccompProfile:
+                    type: RuntimeDefault
+            affinity:
+                podAntiAffinity:
+                    requiredDuringSchedulingIgnoredDuringExecution:
+                        - labelSelector:
+                              matchExpressions:
+                                  - key: tier
+                                    operator: In
+                                    values:
+                                        - production
+                          topologyKey: kubernetes.io/hostname
+            containers:
+                - name: runner
+                  image: your-registry.internal/custom-forgejo-runner:mandrel-23
+                  imagePullPolicy: Always
+                  env:
+                      - name: GITEA_INSTANCE_URL
+                        valueFrom:
+                            secretKeyRef:
+                                name: forgejo-runner-secret
+                                key: FORGEJO_INSTANCE_URL
+                      - name: GITEA_RUNNER_REGISTRATION_TOKEN
+                        valueFrom:
+                            secretKeyRef:
+                                name: forgejo-runner-secret
+                                key: FORGEJO_RUNNER_TOKEN
+                      - name: GITEA_RUNNER_LABELS
+                        value: "native-build:docker://your-registry.internal/custom-forgejo-runner:mandrel-23"
+                  resources:
+                      requests:
+                          cpu: "8000m"
+                          memory: "12Gi"
+                      limits:
+                          cpu: "32000m"
+                          memory: "32Gi"
+                  volumeMounts:
+                      - name: runner-data
+                        mountPath: /home/runner/.gradle
+                        subPath: gradle-cache
+                      - name: runner-data
+                        mountPath: /workspace
+                        subPath: workspace-data
+    volumeClaimTemplates:
+        - metadata:
+              name: runner-data
+          spec:
+              accessModes: ["ReadWriteOnce"]
+              storageClassName: "local-runner-storage"
+              resources:
+                  requests:
+                      storage: 100Gi
