@@ -1,0 +1,93 @@
+services:
+    postgres:
+        image: postgres:18-alpine
+        container_name: postgres
+        restart: always
+
+        environment:
+            TZ: Asia/Ulaanbaatar
+            POSTGRES_USER: admin
+            POSTGRES_PASSWORD: supersecret
+            POSTGRES_DB: postgres
+
+        volumes:
+            - postgres_data:/var/lib/postgresql
+            - ./init-multiple-databases.sh:/docker-entrypoint-initdb.d/init-multiple-databases.sh:ro
+
+        ports:
+            - "5432:5432"
+
+        command:
+            - "postgres"
+            - "-c"
+            - "password_encryption=scram-sha-256"
+        healthcheck:
+            test: ["CMD-SHELL", "pg_isready -U admin -d postgres"]
+            interval: 10s
+            timeout: 5s
+            retries: 5
+            start_period: 10s
+
+        networks:
+            - backend_network
+
+    keycloak:
+        image: quay.io/keycloak/keycloak:26.6.1
+        container_name: keycloak
+        restart: always
+        command: start-dev
+        ports:
+            - "8080:8080"
+        environment:
+            KC_HOSTNAME: http://sso.local:8080
+            KC_HOSTNAME_STRICT: "false"
+            KC_HOSTNAME_STRICT_BACKCHANNEL: "false"
+            KC_PROXY_HEADERS: xforwarded
+            KC_BOOTSTRAP_ADMIN_USERNAME: "admin"
+            KC_BOOTSTRAP_ADMIN_PASSWORD: "admin"
+            KC_DB: "postgres"
+            KC_DB_URL_HOST: "postgres"
+            KC_DB_USERNAME: "admin"
+            KC_DB_PASSWORD: "supersecret"
+            KC_DB_TLS_MODE: "disabled"
+            TZ: "Asia/Ulaanbaatar"
+        depends_on:
+            - postgres
+        networks:
+            - backend_network
+
+    forgejo:
+        image: codeberg.org/forgejo/forgejo:15
+        container_name: forgejo
+        environment:
+            TZ: Asia/Ulaanbaatar
+            USER_UID: 1000
+            USER_GID: 1000
+            FORGEJO__database__DB_TYPE: "postgres"
+            FORGEJO__database__HOST: "postgres:5432"
+            FORGEJO__database__NAME: forgejo
+            FORGEJO__database__USER: admin
+            FORGEJO__database__PASSWD: supersecret
+        restart: always
+        extra_hosts:
+            sso.local: host-gateway
+        networks:
+            - backend_network
+        depends_on:
+            - keycloak
+        volumes:
+            - forgejo_data:/data
+            - ./app.ini:/etc/forgejo
+        ports:
+            - "3000:3000"
+            - "222:22"
+
+volumes:
+    postgres_data:
+        driver: local
+    forgejo_data:
+        driver: local
+
+networks:
+    backend_network:
+        external: false
