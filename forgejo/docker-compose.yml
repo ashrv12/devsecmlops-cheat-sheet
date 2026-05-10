@@ -87,11 +87,53 @@ services:
             - "3000:3000"
             - "222:22"
 
+    # dind:
+    #     image: docker:27-dind
+    #     container_name: forgejo-dind
+    #     privileged: true
+    #     environment:
+    #     DOCKER_TLS_CERTDIR: /certs
+    #     volumes:
+    #         - forgejo-dind-certs:/certs
+    #         - forgejo-dind-data:/var/lib/docker
+    #     networks:
+    #         - backend_network
+
+    # runner:
+    #     image: codeberg.org/forgejo/runner:6.2.2
+    #     container_name: forgejo-runner
+    #     restart: always
+    #     depends_on:
+    #         - forgejo
+    #         - dind
+    #     environment:
+    #         # Use the internal service name and port
+    #         FORGEJO_INSTANCE_URL: http://forgejo:3000
+    #         # PASTE YOUR TOKEN HERE
+    #         FORGEJO_RUNNER_REGISTRATION_TOKEN: "bcd64bc1f35160d9490129f37f4133cbef63b103"
+    #         FORGEJO_RUNNER_NAME: "devsecops-runner"
+    #         # This sets your specific label
+    #         FORGEJO_RUNNER_LABELS: "4433:docker://node:20-bookworm"
+    #         DOCKER_HOST: tcp://dind:2376
+    #         DOCKER_CERT_PATH: /certs/client
+    #         DOCKER_TLS_VERIFY: 1
+    #     volumes:
+    #         - forgejo-runner-data:/data
+    #         - forgejo-dind-certs:/certs/client:ro
+    #     networks:
+    #         - backend_network
+
 volumes:
     postgres_data:
         driver: local
     forgejo_data:
         driver: local
+    # forgejo-dind-certs:
+    #     driver: local
+    # forgejo-dind-data:
+    #     driver: local
+    # forgejo-runner-data:
+    #     driver: local
 
 networks:
     backend_network:

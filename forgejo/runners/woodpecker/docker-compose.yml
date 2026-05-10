@@ -1,0 +1,57 @@
+services:
+    woodpecker-server:
+        image: woodpeckerci/woodpecker-server:v3
+        ports:
+            - 8000:8000
+        volumes:
+            - woodpecker-server-data:/var/lib/woodpecker/
+        environment:
+            - WOODPECKER_OPEN=true
+            - WOODPECKER_HOST=http://localhost:8000
+            - WOODPECKER_AGENT_SECRET=supersecret
+            - WOODPECKER_FORGEJO=true
+            - WOODPECKER_FORGEJO_URL=http://localhost:3000
+            - WOODPECKER_FORGEJO_CLIENT=096c821f-4735-415c-9367-bc86dfdb7db9
+            - WOODPECKER_FORGEJO_SECRET=gto_xsayhqb7q67fcbyma655zkyvodiuts6e4b6tn7ix3znh6qdtyepq
+            - WOODPECKER_BACKEND_DOCKER_NETWORK=forgejo_backend_network
+            - WOODPECKER_DATABASE_DRIVER=postgres
+            - WOODPECKER_DATABASE_DATASOURCE=postgres://admin:supersecret@postgres:5432/postgres?sslmode=disable
+
+        networks:
+            - forgejo_backend_network
+
+    woodpecker-agent:
+        image: woodpeckerci/woodpecker-agent:v3
+        command: agent
+        restart: always
+        depends_on:
+            - woodpecker-server
+        volumes:
+            - woodpecker-agent-config:/etc/woodpecker
+            - /var/run/docker.sock:/var/run/docker.sock
+        environment:
+            - WOODPECKER_SERVER=woodpecker-server:9000
+            - WOODPECKER_AGENT_SECRET=supersecret
+            - DOCKER_HOST=tcp://docker-in-docker:2375
+        networks:
+            - forgejo_backend_network
+
+    docker-in-docker:
+        image: docker:dind
+        container_name: "docker_dind"
+        privileged: "true"
+        command: ["dockerd", "-H", "tcp://0.0.0.0:2375", "--tls=false"]
+        restart: "unless-stopped"
+        volumes:
+            - dind-data:/var/lib/docker
+        networks:
+            - forgejo_backend_network
+
+networks:
+    forgejo_backend_network:
+        external: true
+
+volumes:
+    woodpecker-server-data:
+    woodpecker-agent-config:
+    dind-data:

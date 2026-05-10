@@ -1,0 +1,39 @@
+services:
+    docker-in-docker:
+        image: docker:dind
+        container_name: "docker_dind"
+        privileged: "true"
+        command: ["dockerd", "-H", "tcp://0.0.0.0:2375", "--tls=false"]
+        restart: "unless-stopped"
+        volumes:
+            - dind_data:/var/lib/docker
+            - ./data:/data
+        networks:
+            - forgejo_backend_network
+
+    runner:
+        image: ubi:777
+        links:
+            - docker-in-docker
+        depends_on:
+            docker-in-docker:
+                condition: service_started
+        container_name: "runner"
+        environment:
+            DOCKER_HOST: tcp://docker-in-docker:2375
+            PATH: /opt/mise/shims:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+        # User without root privileges, but with access to `./data`.
+        # user: 1001:1001
+        volumes:
+            - ./data:/data
+        restart: "unless-stopped"
+        # command: "forgejo-runner daemon --config runner-config.yml"
+        networks:
+            - forgejo_backend_network
+
+volumes:
+    dind_data:
+
+networks:
+    forgejo_backend_network:
+        external: true
