@@ -1,0 +1,45 @@
+# Global owners (Fallback if no specific match)
+
+-       @org/product-managers
+
+# --- Infrastructure & CI/CD ---
+
+# Protect the Forgejo Actions and CI workflows
+
+/.forgejo/ @org/devsecops-leads
+/.github/ @org/devsecops-leads
+
+# --- Build Configuration ---
+
+# Changes to dependencies and native image configs require lead review
+
+/pom.xml @org/devsecops-leads
+/build.gradle @org/devsecops-leads
+/src/main/resources/application.properties @org/product-managers @org/devsecops-leads
+
+# --- Security & Identity ---
+
+# Specific focus on ZITADEL or Better Auth integration points
+
+**/security/ @org/devsecops-leads
+**/auth/ @org/devsecops-leads
+
+# --- Backend Logic (Quarkus/Kotlin) ---
+
+# Java/Kotlin source code defaults to the developer team
+
+/src/main/kotlin/ @org/developers
+/src/main/java/ @org/developers
+
+# --- Database Migrations ---
+
+# Ensure database schema changes are reviewed by PMs or DBAs
+
+\*\*/resources/db/ @org/product-managers
+
+# --- Deployment & Orchestration ---
+
+# Kubernetes manifests or Helm charts
+
+/charts/ @org/devsecops-leads
+/k8s/ @org/devsecops-leads
