@@ -41,3 +41,5 @@ limits:
   compactor_blocks_retention_period: 365d
 compactor:
   retention_enabled: true
+
+
