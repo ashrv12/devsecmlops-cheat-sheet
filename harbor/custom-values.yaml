@@ -1,0 +1,70 @@
+# Harbor Configuration for Envoy Gateway & External Services
+
+# 1. Gateway API Integration (Envoy)
+expose:
+  type: ingress
+  tls:
+    enabled: true
+    certSource: secret
+    secretName: harbor-tls-cert
+  ingress:
+    hosts:
+      core: harbor.example.com
+    # Set the ingress class to match your Envoy Gateway configuration
+    controller: harbor.envoy.gateway
+
+# 2. External Postgres
+database:
+  type: external
+  external:
+    host: "postgres-host"
+    port: 5432
+    username: "harbor"
+    password: "yourpassword"
+    coreDatabase: "registry"
+
+# 3. External Valkey (Use Redis settings)
+# Note: Ensure Valkey is running in a mode compatible with Harbor's expectations
+redis:
+  type: external
+  external:
+    host: "valkey-cluster-host"
+    port: 6379
+    # If using Sentinel or Cluster, Harbor supports those via specific connection strings
+    # For a standard cluster endpoint:
+    addr: "valkey-cluster-host:6379"
+
+# 4. Storage - Rustfs (S3 Compatible)
+persistence:
+  enabled: true
+  resourcePolicy: "keep"
+  imageChartStorage:
+    type: s3
+    s3:
+      region: us-east-1 # Or your specific region
+      bucket: harbor-bucket
+      accesskey: "your-access-key"
+      secretkey: "your-secret-key"
+      # Point this to your Rustfs endpoint
+      endpoint: "http://rustfs-endpoint:9000"
+      s3forcepathstyle: true
+
+# 5. Vulnerability Scanning (Trivy)
+trivy:
+  enabled: true
+
+# 6. Observability (Metrics, Traces, Logs)
+metrics:
+  enabled: true
+  serviceMonitor:
+    enabled: true # Requires Prometheus Operator
+
+# Harbor 2.x+ supports OpenTelemetry for tracing
+trace:
+  enabled: true
+  otel:
+    endpoint: "otel-collector:4317"
+    # Depending on your collector setup (grpc or http)
+    protocol: grpc
+
+logLevel: info
