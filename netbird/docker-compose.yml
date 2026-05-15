@@ -1,0 +1,108 @@
+services:
+    # Traefik handles TLS termination and routing [cite: 13, 24]
+    traefik:
+        image: traefik:v3.6
+        container_name: netbird-traefik
+        restart: unless-stopped
+        networks: [netbird]
+        command:
+            - "--providers.docker=true"
+            - "--providers.docker.exposedbydefault=false"
+            - "--providers.docker.network=netbird"
+            - "--entrypoints.web.address=:80"
+            - "--entrypoints.websecure.address=:443"
+            # Disables timeouts for long-lived gRPC/WebSocket connections [cite: 27]
+            - "--entrypoints.websecure.transport.respondingTimeouts.readTimeout=0"
+            - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
+            - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
+            - "--certificatesresolvers.letsencrypt.acme.tlschallenge=true"
+            - "--certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json"
+        ports:
+            - "80:80"
+            - "443:443"
+        volumes:
+            - /var/run/docker.sock:/var/run/docker.sock:ro
+            - netbird_traefik_letsencrypt:/letsencrypt
+        logging: &default-logging
+            driver: "json-file"
+            options:
+                max-size: "500m"
+                max-file: "2"
+
+    # Web management console [cite: 15]
+    dashboard:
+        image: netbirdio/dashboard:latest
+        container_name: netbird-dashboard
+        restart: unless-stopped
+        networks: [netbird]
+        env_file:
+            - ./dashboard.env
+        labels:
+            - traefik.enable=true
+            - traefik.http.routers.netbird-dashboard.rule=Host(`netbird.example.com`)
+            - traefik.http.routers.netbird-dashboard.entrypoints=websecure
+            - traefik.http.routers.netbird-dashboard.tls=true
+            - traefik.http.routers.netbird-dashboard.tls.certresolver=letsencrypt
+            - traefik.http.routers.netbird-dashboard.priority=1
+            - traefik.http.services.netbird-dashboard.loadbalancer.server.port=80
+        logging: *default-logging
+
+    # Combined Management, Signal, Relay, and STUN server [cite: 17, 21]
+    netbird-server:
+        image: netbirdio/netbird-server:latest
+        container_name: netbird-server
+        restart: unless-stopped
+        networks: [netbird]
+        environment:
+            # Use Postgres for production-grade storage [cite: 89, 95]
+            - NETBIRD_STORE_ENGINE_POSTGRES_DSN=host=netbird-db user=netbird password=REPLACE_WITH_SECURE_PASSWORD dbname=netbird port=5432 sslmode=disable
+        ports:
+            - "3478:3478/udp" # STUN must be exposed publicly [cite: 41, 42]
+        volumes:
+            - netbird_data:/var/lib/netbird
+            - ./config.yaml:/etc/netbird/config.yaml
+        command: ["--config", "/etc/netbird/config.yaml"]
+        labels:
+            - traefik.enable=true
+            # gRPC routing for signal and management (requires h2c) [cite: 33, 37]
+            - traefik.http.routers.netbird-grpc.rule=Host(`netbird.example.com`) && (PathPrefix(`/signalexchange.SignalExchange/`) || PathPrefix(`/management.ManagementService/`) || PathPrefix(`/management.ProxyService/`))
+            - traefik.http.routers.netbird-grpc.entrypoints=websecure
+            - traefik.http.routers.netbird-grpc.tls=true
+            - traefik.http.routers.netbird-grpc.tls.certresolver=letsencrypt
+            - traefik.http.routers.netbird-grpc.service=netbird-server-h2c
+            # Backend HTTP routing (API, Relay, OAuth2) [cite: 33, 39]
+            - traefik.http.routers.netbird-backend.rule=Host(`netbird.example.com`) && (PathPrefix(`/relay`) || PathPrefix(`/ws-proxy/`) || PathPrefix(`/api`) || PathPrefix(`/oauth2`))
+            - traefik.http.routers.netbird-backend.entrypoints=websecure
+            - traefik.http.routers.netbird-backend.tls=true
+            - traefik.http.routers.netbird-backend.tls.certresolver=letsencrypt
+            - traefik.http.routers.netbird-backend.service=netbird-server
+            # Service definitions
+            - traefik.http.services.netbird-server.loadbalancer.server.port=80
+            - traefik.http.services.netbird-server-h2c.loadbalancer.server.port=80
+            - traefik.http.services.netbird-server-h2c.loadbalancer.server.scheme=h2c
+        logging: *default-logging
+        depends_on:
+            - netbird-db
+
+    # Recommended Postgres database [cite: 95]
+    netbird-db:
+        image: postgres:15-alpine
+        container_name: netbird-db
+        restart: unless-stopped
+        networks: [netbird]
+        environment:
+            - POSTGRES_USER=netbird
+            - POSTGRES_PASSWORD=REPLACE_WITH_SECURE_PASSWORD
+            - POSTGRES_DB=netbird
+        volumes:
+            - netbird_db_data:/var/lib/postgresql/data
+        logging: *default-logging
+
+networks:
+    netbird:
+        driver: bridge
+
+volumes:
+    netbird_data: # Stores encryption keys and state [cite: 45]
+    netbird_traefik_letsencrypt: # Stores SSL certificates [cite: 47]
+    netbird_db_data: # Stores the Postgres database

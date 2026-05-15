@@ -1,0 +1,40 @@
+server:
+  # The internal address the server listens on [cite: 54]
+  listenAddress: ":80"
+  # The public URL peers use to connect 
+  exposedAddress: "https://netbird.example.com"
+  
+  # Database configuration for production [cite: 87, 95]
+  store:
+    engine: "postgres"
+    # Matches the 'netbird-db' service name in docker-compose 
+    dsn: "host=netbird-db user=netbird password=REPLACE_WITH_SECURE_PASSWORD dbname=netbird port=5432 sslmode=disable"
+    # A 32-byte base64 string for encrypting sensitive data at rest [cite: 90, 99]
+    encryptionKey: "REPLACE_WITH_BASE64_32_BYTE_KEY="
+
+  # Authentication settings for the embedded IdP [cite: 68]
+  auth:
+    [cite_start]issuer: "https://netbird.example.com/oauth2" [cite: 69]
+    [cite_start]localAuthDisabled: false [cite: 71]
+    [cite_start]signKeyRefreshEnabled: true [cite: 73]
+    dashboardRedirectURIs:
+      - [cite_start]"https://netbird.example.com/nb-auth" [cite: 75]
+      - [cite_start]"https://netbird.example.com/nb-silent-auth" [cite: 75]
+    cliRedirectURIs:
+      - [cite_start]"http://localhost:53000/" [cite: 76]
+    # Maximum MFA session duration [cite: 81]
+    [cite_start]mfaSessionMaxLifetime: "24h" [cite: 82]
+
+  # STUN server configuration [cite: 44, 57]
+  stunPorts:
+    - [cite_start]3478 [cite: 57]
+  
+  # Internal secret for relay authentication [cite: 65]
+  [cite_start]authSecret: "REPLACE_WITH_RANDOM_SECRET_STRING" [cite: 66]
+  
+  # Logging configuration [cite: 62]
+  [cite_start]logLevel: "info" [cite: 62]
+  [cite_start]logFile: "console" [cite: 64]
+  
+  # Directory for SQLite state files (even when using Postgres for main data) [cite: 67]
+  dataDir: "/var/lib/netbird"
