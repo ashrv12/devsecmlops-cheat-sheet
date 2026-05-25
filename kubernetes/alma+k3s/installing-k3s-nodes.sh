@@ -160,7 +160,7 @@ cilium install --version 1.19.3 --set=ipam.operator.clusterPoolIPv4PodCIDRList="
 cilium install \
     --set=ipam.operator.clusterPoolIPv4PodCIDRList="10.42.0.0/16" \
     --set kubeProxyReplacement=true \
-    --set k8sServiceHost=192.168.50.212 \
+    --set k8sServiceHost=172.29.1.10 \
     --set k8sServicePort=6443 \
     --set encryption.enabled=true \
     --set encryption.type=wireguard \
@@ -168,20 +168,25 @@ cilium install \
     --set hubble.relay.enabled=true \
     --set hubble.ui.enabled=true \
     --set operator.replicas=1 \
-    --set gatewayAPI.enabled=true
+    --set ingressController.enabled=true
+
+API_SERVER_IP=`hostname -I`
+API_SERVER_PORT=6443
+POD_CIDR="10.42.0.0/16"
+cilium install \
+    --set k8sServiceHost=${API_SERVER_IP} \
+    --set k8sServicePort=${API_SERVER_PORT} \
+    --set ipam.operator.clusterPoolIPv4PodCIDRList=$POD_CIDR \
+    --set kubeProxyReplacement=true \
+    --set hubble.relay.enabled=true \
+    --set hubble.ui.enabled=true \
+    --set operator.replicas=1 \
+    --set ingressController.enabled=true
+
 
 cilium upgrade \
-    --set kubeProxyReplacement=true \
-    --set k8sServiceHost=192.168.50.212 \
-    --set k8sServicePort=6443 \
-    --set ipam.operator.clusterPoolIPv4PodCIDRList="10.42.0.0/16" \
-    --set encryption.enabled=true \
-    --set encryption.type=wireguard \
-    --set encryption.nodeEncryption=true \
-    --set hubble.relay.enabled=true \
-    --set hubble.ui.enabled=true \
-    --set operator.replicas=1 \
-    --set gatewayAPI.enabled=true
+    --reuse-values \
+    --set ingressController.enabled=true
 
 # restart cilium
 kubectl rollout restart deployment cilium-operator -n kube-system
