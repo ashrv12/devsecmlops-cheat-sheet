@@ -1,0 +1,7 @@
+# patch.yaml
+cluster:
+  network:
+    cni:
+      name: none      # Don't install Flannel
+  proxy:
+    disabled: true    # Cilium will replace kube-proxy via eBPF
