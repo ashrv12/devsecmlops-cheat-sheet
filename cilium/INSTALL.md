@@ -1,5 +1,13 @@
 ## Installing Cilium using the Helm Repo
 
+Install the cilium cli + hubble cli
+(i am on mac)
+
+```bash
+brew install cilium-cli
+brew install hubble
+```
+
 ```bash
 helm repo add cilium https://helm.cilium.io
 
