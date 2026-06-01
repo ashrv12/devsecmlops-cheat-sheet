@@ -1,0 +1,26 @@
+apiVersion: "cilium.io/v2"
+kind: CiliumL2AnnouncementPolicy
+metadata:
+    name: homelab-l2-policy
+    namespace: kube-system
+spec:
+    # An empty serviceSelector applies this policy to ALL load balancer services
+    serviceSelector: {}
+    # Regex matching common network interface naming conventions on Linux/Talos
+    interfaces:
+        - enp0s31f6
+    loadBalancerIPs: true
+
+# If you can't find your network device then just use this catch all
+# apiVersion: "cilium.io/v2"
+# kind: CiliumL2AnnouncementPolicy
+# metadata:
+#   name: homelab-l2-policy
+#   namespace: kube-system
+# spec:
+#   serviceSelector: {}
+#   interfaces:
+#     - ^eth[0-9]+
+#     - ^enp[0-9]+
+#     - ^eno[0-9]+
+#   loadBalancerIPs: true
