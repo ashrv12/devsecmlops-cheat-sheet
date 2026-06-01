@@ -2,12 +2,7 @@ FROM ubuntu:noble
 
 # 1. Install system dependencies
 RUN apt-get update && apt-get install -y \
-    ca-certificates \
-    curl \
-    gnupg \
-    git \
-    wget \
-    jq \
+    ca-certificates curl gnupg git wget jq \
     && rm -rf /var/lib/apt/lists/*
 
 # 2. Install mise via APT
@@ -18,19 +13,16 @@ RUN install -m 0755 -d /etc/apt/keyrings && \
     rm -rf /var/lib/apt/lists/*
 
 # 3. Install Node.js 24 and Java (Temurin) 25
-# We use 'mise install' and then add the shims to the PATH
 ENV MISE_DATA_DIR=/opt/mise
 ENV MISE_CONFIG_DIR=/opt/mise
 ENV MISE_STATE_DIR=/opt/mise
 ENV PATH="/opt/mise/shims:${PATH}"
 
-RUN mise use --global node@24 java@temurin-25 && \
+RUN mise use --global maven@3.9.16 node@24 java@temurin-17 pack@latest && \
     mise reshim && \
-    node -v && java -version
+    node -v && java -version && mvn --version
 
-RUN node -v && java -version
-
-# 4. Install Docker CLI (your existing logic)
+# 4. Install Docker CLI (Kept just in case you need docker cli commands)
 RUN curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg && \
     echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo "$VERSION_CODENAME") stable" \
     | tee /etc/apt/sources.list.d/docker.list > /dev/null && \
@@ -44,6 +36,14 @@ RUN ARCH=$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/') && \
     curl -Lo /usr/local/bin/forgejo-runner ${FORGEJO_URL} && \
     chmod +x /usr/local/bin/forgejo-runner
 
+# 6. Create unprivileged user and set permissions
+RUN groupadd -g 1001 runnergroup && \
+    useradd -u 1001 -g runnergroup -s /bin/bash -m runneruser && \
+    mkdir -p /data && \
+    chown -R 1001:1001 /data && \
+    chmod -R 755 /opt/mise 
+
 WORKDIR /data
-USER root
-ENTRYPOINT ["forgejo-runner", "daemon", "--config", "runner-config.yml"]
+USER 1001
+
+ENTRYPOINT ["forgejo-runner", "daemon", "--config", "/config/runner-config.yml"]

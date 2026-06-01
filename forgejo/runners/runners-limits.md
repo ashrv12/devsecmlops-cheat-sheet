@@ -57,4 +57,4 @@ buildCache {
 | Runner Type         | CPU Request/Limit | RAM Request/Limit | Strategy                                                                         |
 | ------------------- | ----------------- | ----------------- | -------------------------------------------------------------------------------- |
 | Production (Native) | 4000m / 12000m    | 12Gi / 24Gi       | High CPU burst for static analysis; high RAM for native image.                   |
-| Dev/Test (JAR)      | 1000m / 4000m     | 2Gi / 4Gi         | Standard Quarkus JVM build. Kotlin DSL will spike CPU during script compilation. |
+| Dev/Test (JAR)      | 1000m / 2000m     | 2Gi / 4Gi         | Standard Quarkus JVM build. Kotlin DSL will spike CPU during script compilation. |
