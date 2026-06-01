@@ -131,3 +131,7 @@ talosctl kubeconfig . --talosconfig ./talosconfig
 ```bash
 kubectl get nodes
 ```
+
+```bash
+talosctl shutdown --talosconfig ./talosconfig
+```
