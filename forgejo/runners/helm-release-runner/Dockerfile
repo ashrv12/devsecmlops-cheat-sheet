@@ -9,6 +9,23 @@ RUN curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-4 | b
 
 RUN helm version
 
+# 2. Install mise via APT
+RUN install -m 0755 -d /etc/apt/keyrings && \
+    curl -fsSL https://mise.jdx.dev/gpg-key.pub | gpg --dearmor -o /etc/apt/keyrings/mise-archive-keyring.gpg && \
+    echo "deb [signed-by=/etc/apt/keyrings/mise-archive-keyring.gpg arch=$(dpkg --print-architecture)] https://mise.jdx.dev/deb stable main" | tee /etc/apt/sources.list.d/mise.list && \
+    apt-get update && apt-get install -y mise && \
+    rm -rf /var/lib/apt/lists/*
+
+# 3. Install Node.js 24 and Java (Temurin) 25
+ENV MISE_DATA_DIR=/opt/mise
+ENV MISE_CONFIG_DIR=/opt/mise
+ENV MISE_STATE_DIR=/opt/mise
+ENV PATH="/opt/mise/shims:${PATH}"
+
+RUN mise use --global node@24 && \
+    mise reshim && \
+    node -v
+
 # 3. Fetch and install Forgejo Runner
 RUN ARCH=$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/') && \
     RUNNER_VERSION=$(curl -s https://data.forgejo.org/api/v1/repos/forgejo/runner/releases/latest | jq .tag_name -r | sed 's/^v//') && \
