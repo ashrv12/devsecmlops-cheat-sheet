@@ -33,6 +33,13 @@ RUN ARCH=$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/') && \
     curl -Lo /usr/local/bin/forgejo-runner ${FORGEJO_URL} && \
     chmod +x /usr/local/bin/forgejo-runner
 
+# 3.1 Added YQ for yaml updates
+RUN ARCH=$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/') && \
+    YQ_VERSION=$(curl -s https://api.github.com/repos/mikefarah/yq/releases/latest | jq .tag_name -r) && \
+    curl -Lo /usr/local/bin/yq "https://github.com/mikefarah/yq/releases/download/${YQ_VERSION}/yq_linux_${ARCH}" && \
+    chmod +x /usr/local/bin/yq && \
+    yq --version
+
 # 4. Create unprivileged user and set permissions
 RUN groupadd -g 1001 runnergroup && \
     useradd -u 1001 -g runnergroup -s /bin/bash -m runneruser && \
