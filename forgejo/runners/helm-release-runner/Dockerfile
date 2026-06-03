@@ -33,11 +33,9 @@ RUN ARCH=$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/') && \
     curl -Lo /usr/local/bin/forgejo-runner ${FORGEJO_URL} && \
     chmod +x /usr/local/bin/forgejo-runner
 
-# 3.1 Added YQ for yaml updates
-RUN ARCH=$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/') && \
-    YQ_VERSION=$(curl -s https://api.github.com/repos/mikefarah/yq/releases/latest | jq .tag_name -r) && \
-    curl -Lo /usr/local/bin/yq "https://github.com/mikefarah/yq/releases/download/${YQ_VERSION}/yq_linux_${ARCH}" && \
-    chmod +x /usr/local/bin/yq && \
+# 5. Fetch and install YQ (Hardened amd64 target)
+RUN curl -Lo /usr/local/bin/yq "https://github.com/mikefarah/yq/releases/download/v4.44.1/yq_linux_amd64" && \
+    chmod 755 /usr/local/bin/yq && \
     yq --version
 
 # 4. Create unprivileged user and set permissions
@@ -48,5 +46,7 @@ RUN groupadd -g 1001 runnergroup && \
 
 WORKDIR /data
 USER 1001
+
+RUN yq --version
 
 ENTRYPOINT ["forgejo-runner", "daemon", "--config", "/config/runner-config.yml"]
