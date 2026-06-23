@@ -40,13 +40,13 @@ RUN mise use --global node@24 && \
 
 RUN mise use --global android-sdk@latest
 
-RUN mise use --global flutter@latest
+RUN mise use --global flutter@3.38.5
 
 RUN mise reshim
 
 RUN flutter precache --android
 
-RUN flutter upgrade --force
+# RUN flutter upgrade --force
 
 RUN flutter --disable-analytics
 
