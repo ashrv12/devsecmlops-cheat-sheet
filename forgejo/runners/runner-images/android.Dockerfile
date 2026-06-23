@@ -44,6 +44,12 @@ RUN mise use --global flutter@latest
 
 RUN mise reshim
 
+RUN flutter precache --android
+
+RUN flutter upgrade --force
+
+RUN flutter --disable-analytics
+
 # 6. Automatically accept Android SDK licenses (Required for headless CI compiles)
 RUN yes | mise exec -- sdkmanager --licenses
 
