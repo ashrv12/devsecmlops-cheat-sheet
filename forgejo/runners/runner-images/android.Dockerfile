@@ -36,10 +36,13 @@ ENV PATH="/opt/mise/shims:${PATH}"
 
 # 5. Install Node, Java, Android SDK, and Flutter globally via mise as runneruser
 RUN mise use --global node@24 && \
-    mise use --global java@21 && \
-    mise use --global android-sdk@latest && \
-    mise use --global flutter@latest && \
-    mise reshim
+    mise use --global java@21
+
+RUN mise use --global android-sdk@latest
+
+RUN mise use --global flutter@latest
+
+RUN mise reshim
 
 # 6. Automatically accept Android SDK licenses (Required for headless CI compiles)
 RUN yes | mise exec -- sdkmanager --licenses
