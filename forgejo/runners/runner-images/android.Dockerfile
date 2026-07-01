@@ -1,5 +1,10 @@
 FROM ubuntu:noble
 
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    openssl \
+    libssl3t64 \
+    && rm -rf /var/lib/apt/lists/*
+
 # 1. Install baseline system dependencies (Added unzip, zip, and xz-utils for SDK extraction)
 RUN apt-get update && apt-get install -y \
     ca-certificates curl gnupg git wget jq unzip zip xz-utils \
