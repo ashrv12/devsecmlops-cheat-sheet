@@ -47,6 +47,7 @@ RUN mise use --global android-sdk@latest
 
 RUN mise use --global flutter@3.38.5
 
+
 RUN mise reshim
 
 RUN flutter precache --android
@@ -57,5 +58,8 @@ RUN flutter --disable-analytics
 
 # 6. Automatically accept Android SDK licenses (Required for headless CI compiles)
 RUN yes | mise exec -- sdkmanager --licenses
+
+RUN mise use --global trivy@latest
+RUN trivy rootfs /
 
 ENTRYPOINT ["forgejo-runner", "daemon", "--config", "/config/runner-config.yml"]
