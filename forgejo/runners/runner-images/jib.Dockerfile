@@ -3,7 +3,7 @@
 # Docker, no DinD and no privileged pod. Jib builds and pushes the OCI image
 # without a daemon.
 
-ARG RUNNER_VERSION=12
+ARG RUNNER_VERSION=13.2.1
 ARG JAVA_VERSION=25
 
 FROM data.forgejo.org/forgejo/runner:${RUNNER_VERSION} AS runner
