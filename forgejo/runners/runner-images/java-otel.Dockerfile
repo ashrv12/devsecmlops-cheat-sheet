@@ -9,6 +9,11 @@
 #   p build -f java-otel.Dockerfile --build-arg JAVA_VERSION=17 --build-arg OTEL_SHA256=<sha256> \
 #     -t harbor.internal.m-business.mn/library/java17-otel:2.33.1 .
 
+# set -x OTEL_SHA256 (curl -fsSL https://repo1.maven.org/maven2/io/opentelemetry/javaagent/opentelemetry-javaagent/2.33.1/opentelemetry-javaagent-2.33.1.jar.sha256)
+
+#  p build -f java-otel.Dockerfile --build-arg JAVA_VERSION=25 --build-arg OTEL_SHA256=$OTEL_SHA256 \
+#        -t harbor.internal.m-business.mn/library/java25-otel:2.33.1 .
+
 ARG JAVA_VERSION=25
 ARG OTEL_VERSION=2.33.1
 
